@@ -1,0 +1,22 @@
+{
+  "brand_id": "tokopedia",
+  "brand_name": "Tokopedia",
+  "logo_url": "https://lf-web-assets.tokopedia-static.net/obj/tokopedia-web-sg/arael_v3/0c292173.png",
+  "schema": [
+    {
+      "name": "email",
+      "type": "email",
+      "prompt": "Email"
+    },
+    {
+      "name": "password",
+      "type": "password",
+      "prompt": "Password"
+    },
+    {
+      "name": "submit",
+      "type": "click",
+      "prompt": "Sign In"
+    }
+  ]
+}

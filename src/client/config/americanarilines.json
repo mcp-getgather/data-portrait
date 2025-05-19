@@ -1,0 +1,123 @@
+{
+  "integration": {
+    "brand_id": "americanairlines",
+    "brand_name": "American Airlines",
+    "logo_url": "https://download.logo.wine/logo/American_Airlines/American_Airlines-Logo.wine.png"
+  },
+  "branding": {
+    "app_name": "starpath",
+    "welcome_title": "Starpath",
+    "welcome_description": "Get 3,000 loyalty points and exclusive personalized perks at Starpath when you link your American Airlines Account!",
+    "disclaimer": "*Earn Starpath credit by sharing your American Airlines purchases from the past year and the year ahead",
+    "no_data_disclaimer": "No trips have been taken in the past two years. If any travel occurred, details such as flight number, origin, destination, and travel date would be provided."
+  },
+  "theme": {
+    "backgroundColor": "#F4F4F4",
+    "titleColor": "#304CB2",
+    "primaryColor": "#304CB2",
+    "secondaryColor": "#FEBF28",
+    "textColor": "#3d2c3e",
+    "cardBackgroundColor": "transparent"
+  },
+  "dataTransform": {
+    "dataPath": "bundles.0.content.activityCards",
+    "fieldMappings": [
+      {
+        "outputKey": "flight_id",
+        "sourcePath": "details.flightDetails.0.flightInfo.ticketNumber",
+        "defaultValue": "N/A"
+      },
+      {
+        "outputKey": "flight_number",
+        "sourcePath": "details.flightDetails.0.flightInfo.flightNumber",
+        "defaultValue": "N/A"
+      },
+      {
+        "outputKey": "origin",
+        "sourcePath": "summary.origin",
+        "defaultValue": "N/A"
+      },
+      {
+        "outputKey": "destination",
+        "sourcePath": "summary.destination",
+        "defaultValue": "N/A"
+      },
+      {
+        "outputKey": "travel_date",
+        "sourcePath": "details.flightDetails.0.flightInfo.travelDate",
+        "defaultValue": "N/A"
+      },
+      {
+        "outputKey": "miles_earned",
+        "sourcePath": "summary.milesSummary.totalAwardMiles",
+        "transform": "string",
+        "defaultValue": "0"
+      },
+      {
+        "outputKey": "base_miles",
+        "sourcePath": "summary.milesSummary.totalBaseMiles",
+        "transform": "string",
+        "defaultValue": "0"
+      },
+      {
+        "outputKey": "bonus_miles",
+        "sourcePath": "summary.milesSummary.totalBonusMiles",
+        "transform": "string",
+        "defaultValue": "0"
+      },
+      {
+        "outputKey": "pnr_number",
+        "sourcePath": "details.flightDetails.0.flightInfo.pnrNumber",
+        "defaultValue": "N/A"
+      },
+      {
+        "outputKey": "traveler_name",
+        "sourcePath": "details.flightDetails.0.flightInfo.travelerName",
+        "defaultValue": "N/A"
+      },
+      {
+        "outputKey": "booking_class",
+        "sourcePath": "details.flightDetails.0.flightInfo.bookingClassCode",
+        "defaultValue": "N/A"
+      },
+      {
+        "outputKey": "activity_type",
+        "sourcePath": "summary.activityType",
+        "defaultValue": "Flight"
+      },
+      {
+        "outputKey": "transaction_description",
+        "sourcePath": "summary.transactionDescription",
+        "defaultValue": "N/A"
+      },
+      {
+        "outputKey": "marketing_partner",
+        "sourcePath": "summary.marketingPartner",
+        "defaultValue": "AA"
+      },
+      {
+        "outputKey": "route",
+        "sourcePath": "summary.title",
+        "defaultValue": "N/A"
+      }
+    ]
+  },
+  "schema": [
+    {
+      "name": "username",
+      "type": "text",
+      "prompt": "AAdvantage® # or username"
+    },
+    {
+      "name": "password",
+      "type": "password",
+      "prompt": "Password"
+    },
+    {
+      "name": "login",
+      "type": "click",
+      "prompt": "Log in",
+      "dependsOnFields": "username,password"
+    }
+  ]
+}
