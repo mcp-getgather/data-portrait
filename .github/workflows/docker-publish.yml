@@ -22,15 +22,46 @@ jobs:
 
       - run: docker build -t data-portrait .
 
-      - run: docker run -p 3000:3000 --name data-portrait -d data-portrait
-        timeout-minutes: 3
+      - name: Start container
+        run: docker run -p 3000:3000 --name data-portrait -d data-portrait
 
-      - name: Run the health check validation
-        run: while ! curl -s 'http://localhost:3000/health' | grep 'OK'; do sleep 1; done
-        timeout-minutes: 3
+      - name: Check container status
+        run: |
+          echo "Checking if container is running..."
+          docker ps
+          echo "Container logs (first 10 seconds):"
+          sleep 10
+          docker logs data-portrait
 
-      - name: Get the container logs
-        run: docker logs --details data-portrait
+      - name: Wait for container to be ready
+        run: |
+          echo "Waiting for container to start (max 2 minutes)..."
+          for i in {1..120}; do
+            if docker ps | grep data-portrait | grep -q "Up"; then
+              echo "✅ Container is running after ${i}s"
+              break
+            fi
+            echo "⏳ Waiting... ${i}s"
+            sleep 1
+          done
+
+      - name: Test health endpoint
+        run: |
+          echo "Testing health endpoint..."
+          for i in {1..60}; do
+            if curl -f -s http://localhost:3000/health; then
+              echo "✅ Health endpoint responded after ${i}s"
+              exit 0
+            fi
+            echo "⏳ Health check attempt $i/60..."
+            sleep 1
+          done
+          echo "❌ Health endpoint failed to respond after 60s"
+          exit 1
+        timeout-minutes: 2
+
+      - name: Get container logs
+        run: docker logs data-portrait
         if: always()
 
   build-and-publish:
