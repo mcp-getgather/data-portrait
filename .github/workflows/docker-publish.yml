@@ -2,10 +2,10 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: [ main ]
-    tags: [ 'v*' ]
+    branches: [main]
+    tags: ['v*']
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
     inputs:
       tag:
@@ -26,41 +26,115 @@ jobs:
       packages: write
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Log in to Container Registry
-      if: github.event_name != 'pull_request'
-      uses: docker/login-action@v3
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Log in to Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Extract metadata (tags, labels) for Docker
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=sha
-          type=raw,value=${{ github.event.inputs.tag || 'latest' }},enable=${{ github.event_name == 'workflow_dispatch' }}
-          type=raw,value=latest,enable={{is_default_branch}}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            # Branch-based tags
+            type=ref,event=branch
+            type=ref,event=pr
 
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        platforms: linux/amd64,linux/arm64
-        push: ${{ github.event_name != 'pull_request' }}
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+            # Semantic versioning (for git tags like v1.2.3)
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+
+            # Commit hash for traceability  
+            type=sha
+
+            # Manual dispatch custom tags
+            type=raw,value=${{ github.event.inputs.tag }},enable=${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' }}
+
+            # Latest tag for main branch
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test published image
+        if: github.event_name != 'pull_request'
+        run: |
+          # Get the first published tag
+          FIRST_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+          echo "🧪 Testing image: $FIRST_TAG"
+
+          # Pull and run the container
+          docker pull $FIRST_TAG
+          docker run -d --name health-test -p 3000:3000 \
+            -e NODE_ENV=production \
+            $FIRST_TAG
+
+          # Wait for container to be ready (max 60 seconds for cold start)
+          echo "⏳ Waiting for container to start..."
+          HEALTH_OK=false
+          for i in {1..60}; do
+            if curl -f -s http://localhost:3000/health > /dev/null 2>&1; then
+              echo "✅ Container is ready after ${i}s!"
+              HEALTH_OK=true
+              break
+            fi
+            echo "🔄 Attempt $i/60..."
+            sleep 1
+          done
+
+          if [ "$HEALTH_OK" = false ]; then
+            echo "❌ Health check timeout after 60s"
+            docker logs health-test --tail 20
+            docker stop health-test
+            docker rm health-test
+            exit 1
+          fi
+
+          # Verify health endpoint response
+          echo "🔍 Testing health endpoint response..."
+          HEALTH_RESPONSE=$(curl -s http://localhost:3000/health)
+          echo "Response: $HEALTH_RESPONSE"
+
+          # Validate JSON response
+          if echo "$HEALTH_RESPONSE" | jq -e '.status == "OK"' > /dev/null; then
+            echo "✅ Health check validation passed!"
+          else
+            echo "❌ Health check validation failed!"
+            docker logs health-test --tail 20
+            docker stop health-test
+            docker rm health-test
+            exit 1
+          fi
+
+          # Test a few more endpoints to ensure app is fully functional
+          echo "🌐 Testing root endpoint..."
+          curl -f -s http://localhost:3000/ > /dev/null || echo "⚠️  Root endpoint not accessible (may be expected)"
+
+          echo "📊 Container resource usage:"
+          docker stats --no-stream health-test
+
+          # Clean up
+          echo "🧹 Cleaning up test container..."
+          docker stop health-test
+          docker rm health-test
+
+          echo "🎉 All tests passed!"
