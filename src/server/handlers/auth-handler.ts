@@ -6,7 +6,7 @@ export const handleAuthProxy = async (req: Request, res: Response) => {
   try {
     const { brandName } = req.params;
     const baseUrl = settings.GETGATHER_URL.replace(/\/$/, '');
-    const targetUrl = `${baseUrl}/auth/${brandName}`;
+    const targetUrl = `${baseUrl}/api/auth/${brandName}`;
 
     const headers = {
       Authorization: `Bearer ${settings.GETGATHER_API_KEY}`,
