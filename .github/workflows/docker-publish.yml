@@ -3,8 +3,6 @@ name: Publish Container Image
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 env:
@@ -24,22 +22,6 @@ jobs:
 
       - run: docker run -p 3000:3000 --name data-portrait -d data-portrait
         timeout-minutes: 3
-
-      - name: Debug container status
-        run: |
-          echo "=== Container Status ==="
-          docker ps -a
-          echo ""
-          echo "=== Container Logs ==="
-          docker logs data-portrait
-          echo ""
-          echo "=== Test Health Endpoint ==="
-          sleep 10
-          echo "Attempting health check..."
-          curl -v http://localhost:3000/health || echo "Health endpoint failed"
-          echo ""
-          echo "=== Port Check ==="
-          ss -tlnp | grep :3000 || echo "Port 3000 not listening"
 
       - name: Run the health check validation
         run: while ! curl -s 'http://localhost:3000/health' | grep 'OK'; do sleep 1; done
