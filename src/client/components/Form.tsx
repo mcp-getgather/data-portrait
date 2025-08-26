@@ -419,7 +419,7 @@ export function Form({
     isLoading,
   } = state;
 
-  const apiEndpoint = `/getgather/auth/${config.brand_id}`;
+  const apiEndpoint = `/getgather/api/auth/${config.brand_id}`;
 
   // ===== FORM HANDLERS =====
   const updateInitialFormValues = (e: React.ChangeEvent<HTMLInputElement>) => {
