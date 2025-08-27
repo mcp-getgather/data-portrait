@@ -77,42 +77,6 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// API Routes
-app.post('/api/search-purchase-history', async (req, res) => {
-  try {
-    const { keyword = 'computer' } = req.body;
-
-    const mcpClient = getMcpClient();
-
-    const result = await mcpClient.callTool({
-      name: 'amazon_search_purchase_history',
-      arguments: { keyword },
-    });
-
-    const structuredContent = result.structuredContent as {
-      url?: string;
-      link_id?: string;
-    };
-
-    if (structuredContent?.url?.includes(serverUrl ?? '')) {
-      const appHost = getAppHost(req);
-      const proxyPath = structuredContent.url.replace(serverUrl, `${appHost}`);
-      structuredContent.url = proxyPath;
-    }
-
-    res.json({
-      success: true,
-      data: structuredContent,
-    });
-  } catch (error) {
-    console.error('Search purchase history error:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
 app.post('/api/poll-auth', async (req, res) => {
   try {
     const { link_id } = req.body;
