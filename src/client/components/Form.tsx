@@ -9,6 +9,7 @@ import Button from './Button';
 import InputField from './InputField';
 import type { Schema } from '../modules/Schema';
 import LoadingAnimation from './LoadingAnimation';
+import { log } from '../utils/log';
 
 // State type for the reducer
 type HomeState = {
@@ -685,6 +686,10 @@ export function Form({
       if (responseData.error) {
         dispatch({ type: 'SET_API_ERROR', payload: responseData.error });
       } else {
+        log({
+          message: 'Received orders from client',
+          data: responseData,
+        });
         dispatch({ type: 'SET_API_RESPONSE', payload: responseData });
       }
     } catch (error) {
@@ -808,10 +813,21 @@ export function Form({
 
   useEffect(() => {
     if (shouldShowExtractResult) {
+      // Debug: inspect the extract_result directly before any transformation.
+
+      log({
+        message: 'Raw extract_result from Gather',
+        data: apiResponse.extract_result,
+      });
       const transformedData = transformData(
         apiResponse.extract_result,
         config.dataTransform
       );
+      // Debug: inspect transformed purchase history that will be added to state.
+      log({
+        message: 'Transformed purchase history',
+        data: transformedData,
+      });
       onSuccessConnect(transformedData as unknown as PurchaseHistory[]);
     }
   }, [shouldShowExtractResult, apiResponse, config.dataTransform]);
