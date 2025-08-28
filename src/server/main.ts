@@ -53,7 +53,7 @@ app.use(express.static(path.join(__dirname, '../client')));
 // Serve generated images from public directory
 app.use(express.static(path.join(process.cwd(), 'public')));
 
-// Routes
+// Router
 app.use('/health', healthRoutes);
 app.use('/getgather', apiRoutes);
 app.use('*name', (_req, res) => {
