@@ -67,7 +67,7 @@ export function DataSource({
 
             if (responseLinkStatus.ok) {
               const linkStatus = await responseLinkStatus.json();
-              if (linkStatus.profile_id) {
+              if (linkStatus.status === 'completed') {
                 profileId = linkStatus.profile_id;
                 break;
               }
