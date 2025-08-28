@@ -4,6 +4,7 @@ import type { BrandConfig } from '../modules/Config';
 import type { PurchaseHistory } from '../modules/DataTransformSchema';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { settings } from '../config';
 
 interface DataSourceProps {
   onSuccessConnect: (data: PurchaseHistory[]) => void;
@@ -21,7 +22,13 @@ export function DataSource({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleConnect = () => {
-    setIsDialogOpen(true);
+    if (settings.USE_HOSTED_LINK) {
+      console.warn(
+        'DEBUGPRINT[480]: DataSource.tsx:25 (after if (settings.USE_HOSTED_LINK) )'
+      );
+    } else {
+      setIsDialogOpen(true);
+    }
   };
 
   const handleSuccessConnect = (data: PurchaseHistory[]) => {
