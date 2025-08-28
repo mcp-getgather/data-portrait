@@ -42,38 +42,45 @@ export function DataSource({
 
         const data = await response.json();
 
-        // Open hosted link in pop up window and wait for it to close
-        const popup = window.open(
+        // Open hosted link in pop up window
+        window.open(
           data.hosted_link_url,
           '_blank',
           'width=500,height=600,menubar=no,toolbar=no,location=no,status=no'
         );
 
-        // Wait for popup to close
-        await new Promise<void>((resolve) => {
-          const checkClosed = () => {
-            if (popup?.closed) {
-              resolve();
-            } else {
-              setTimeout(checkClosed, 1000);
+        // Poll for profile ID with retry logic
+        let profileId;
+        let attempts = 0;
+        const maxAttempts = 30; // 30 seconds max
+        
+        while (attempts < maxAttempts) {
+          try {
+            const responseLinkStatus = await fetch(`/getgather/link/status/${data.link_id}`, {
+              method: 'GET',
+              headers: {
+                'accept': 'application/json',
+              },
+            });
+
+            if (responseLinkStatus.ok) {
+              const linkStatus = await responseLinkStatus.json();
+              if (linkStatus.profile_id) {
+                profileId = linkStatus.profile_id;
+                break;
+              }
             }
-          };
-          checkClosed();
-        });
-
-        // Get Profile Id
-        const responseLinkStatus = await fetch(`/getgather/link/status/${data.link_id}`, {
-          method: 'GET',
-          headers: {
-            'accept': 'application/json',
-          },
-        });
-
-        if (!responseLinkStatus.ok) {
-          throw new Error(`HTTP error! status: ${responseLinkStatus.status}`);
+          } catch (error) {
+            console.log('Polling attempt failed:', error);
+          }
+          
+          attempts++;
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
-        const dataLinkStatus = await responseLinkStatus.json();
+        if (!profileId) {
+          throw new Error('Profile ID not available after polling');
+        }
 
         // Call auth to get, pass profile_id on the body
         const responseAuth = await fetch(`/getgather/auth/${brandConfig.brand_id}`, {
@@ -82,7 +89,7 @@ export function DataSource({
             'accept': 'application/json',
           },
           body: JSON.stringify({
-            profile_id: dataLinkStatus.profile_id
+            profile_id: profileId
           })
         })
 
