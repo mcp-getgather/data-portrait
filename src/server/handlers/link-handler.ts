@@ -1,0 +1,53 @@
+import { Request, Response } from 'express';
+import { settings } from '../config.js';
+import { createSanitizedLogMessage } from '../utils/request-sanitizer.js';
+
+export const handleLinkProxy = async (req: Request, res: Response) => {
+  try {
+    const baseUrl = settings.GETGATHER_URL.replace(/\/$/, '');
+    const targetUrl = `${baseUrl}/api/link/create`;
+
+    const headers = {
+      'Content-Type': 'application/json',
+      accept: 'application/json',
+    };
+
+    const data = req.body || {};
+
+    console.log(createSanitizedLogMessage('🔗 Link creation request', data));
+
+    const upstreamResponse = await fetch(targetUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data),
+      signal: AbortSignal.timeout(30000),
+    });
+
+    res.status(upstreamResponse.status);
+
+    upstreamResponse.headers.forEach((value, key) => {
+      const skipHeaders = [
+        'content-encoding',
+        'content-length',
+        'transfer-encoding',
+      ];
+      if (!skipHeaders.includes(key.toLowerCase())) {
+        res.setHeader(key, value);
+      }
+    });
+
+    const responseBody = await upstreamResponse.text();
+    res.send(responseBody);
+
+    console.log('✅ Link created successfully');
+  } catch (error) {
+    console.error('❌ Link creation failed', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        error: 'Link creation failed',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+};
+

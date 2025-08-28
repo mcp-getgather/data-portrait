@@ -21,11 +21,34 @@ export function DataSource({
 }: DataSourceProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleConnect = () => {
+  const handleConnect = async () => {
     if (settings.USE_HOSTED_LINK) {
-      console.warn(
-        'DEBUGPRINT[480]: DataSource.tsx:25 (after if (settings.USE_HOSTED_LINK) )'
-      );
+      try {
+        const response = await fetch('/getgather/link/create', {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            brand_id: brandConfig.brand_id
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        window.open(
+          data.hosted_link_url,
+          '_blank',
+          'width=500,height=600,menubar=no,toolbar=no,location=no,status=no'
+        );
+      } catch (error) {
+        console.error('Failed to create hosted link:', error);
+      }
     } else {
       setIsDialogOpen(true);
     }
