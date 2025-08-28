@@ -46,6 +46,7 @@ export function DataSource({
           '_blank',
           'width=500,height=600,menubar=no,toolbar=no,location=no,status=no'
         );
+        onSuccessConnect([]);
       } catch (error) {
         console.error('Failed to create hosted link:', error);
       }
