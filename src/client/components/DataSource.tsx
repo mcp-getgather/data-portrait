@@ -24,6 +24,7 @@ export function DataSource({
   const handleConnect = async () => {
     if (settings.USE_HOSTED_LINK) {
       try {
+        // Create hosted link
         const response = await fetch('/getgather/link/create', {
           method: 'POST',
           headers: {
@@ -40,12 +41,55 @@ export function DataSource({
         }
 
         const data = await response.json();
-        
-        window.open(
+
+        // Open hosted link in pop up window and wait for it to close
+        const popup = window.open(
           data.hosted_link_url,
           '_blank',
           'width=500,height=600,menubar=no,toolbar=no,location=no,status=no'
         );
+
+        // Wait for popup to close
+        await new Promise<void>((resolve) => {
+          const checkClosed = () => {
+            if (popup?.closed) {
+              resolve();
+            } else {
+              setTimeout(checkClosed, 1000);
+            }
+          };
+          checkClosed();
+        });
+
+        // Get Profile Id
+        const responseLinkStatus = await fetch(`/getgather/link/status/${data.link_id}`, {
+          method: 'GET',
+          headers: {
+            'accept': 'application/json',
+          },
+        });
+
+        if (!responseLinkStatus.ok) {
+          throw new Error(`HTTP error! status: ${responseLinkStatus.status}`);
+        }
+
+        const dataLinkStatus = await responseLinkStatus.json();
+
+        // Call auth to get, pass profile_id on the body
+        const responseAuth = await fetch(`/getgather/auth/${brandConfig.brand_id}`, {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+          },
+          body: JSON.stringify({
+            profile_id: dataLinkStatus.profile_id
+          })
+        })
+
+        if (!responseAuth.ok) {
+          throw new Error(`HTTP error! status: ${responseAuth.status}`);
+        }
+
         onSuccessConnect([]);
       } catch (error) {
         console.error('Failed to create hosted link:', error);

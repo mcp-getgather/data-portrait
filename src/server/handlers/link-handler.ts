@@ -51,3 +51,49 @@ export const handleLinkProxy = async (req: Request, res: Response) => {
   }
 };
 
+export const handleLinkStatusProxy = async (req: Request, res: Response) => {
+  try {
+    const { linkId } = req.params;
+    const baseUrl = settings.GETGATHER_URL.replace(/\/$/, '');
+    const targetUrl = `${baseUrl}/api/link/status/${linkId}`;
+
+    const headers = {
+      accept: 'application/json',
+    };
+
+    console.log(createSanitizedLogMessage('📊 Link status request', { linkId }));
+
+    const upstreamResponse = await fetch(targetUrl, {
+      method: 'GET',
+      headers,
+      signal: AbortSignal.timeout(30000),
+    });
+
+    res.status(upstreamResponse.status);
+
+    upstreamResponse.headers.forEach((value, key) => {
+      const skipHeaders = [
+        'content-encoding',
+        'content-length',
+        'transfer-encoding',
+      ];
+      if (!skipHeaders.includes(key.toLowerCase())) {
+        res.setHeader(key, value);
+      }
+    });
+
+    const responseBody = await upstreamResponse.text();
+    res.send(responseBody);
+
+    console.log('✅ Link status retrieved successfully');
+  } catch (error) {
+    console.error('❌ Link status retrieval failed', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        error: 'Link status retrieval failed',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+};
+
