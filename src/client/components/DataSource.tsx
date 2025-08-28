@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { SignInDialog } from './SignInDialog';
 import type { BrandConfig } from '../modules/Config';
 import type { PurchaseHistory } from '../modules/DataTransformSchema';
+import { transformData } from '../modules/DataTransformSchema';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { settings } from '../config';
@@ -53,13 +54,14 @@ export function DataSource({
         let profileId;
         let attempts = 0;
         const maxAttempts = 30; // 30 seconds max
-        
+
         while (attempts < maxAttempts) {
           try {
             const responseLinkStatus = await fetch(`/getgather/link/status/${data.link_id}`, {
               method: 'GET',
               headers: {
                 'accept': 'application/json',
+                'Content-Type': 'application/json',
               },
             });
 
@@ -73,7 +75,7 @@ export function DataSource({
           } catch (error) {
             console.log('Polling attempt failed:', error);
           }
-          
+
           attempts++;
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
@@ -87,9 +89,11 @@ export function DataSource({
           method: 'POST',
           headers: {
             'accept': 'application/json',
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            profile_id: profileId
+            profile_id: profileId,
+            extract: true,
           })
         })
 
@@ -97,7 +101,22 @@ export function DataSource({
           throw new Error(`HTTP error! status: ${responseAuth.status}`);
         }
 
-        onSuccessConnect([]);
+        const auth = await responseAuth.json()
+
+        // Transform the response data
+        const transformedData = transformData(auth["extract_result"], brandConfig.dataTransform);
+        
+        // Convert the transformed data to PurchaseHistory format
+        const purchaseHistory: PurchaseHistory[] = transformedData.map(item => ({
+          brand: brandConfig.brand_name,
+          order_date: item.order_date as Date || null,
+          order_total: item.order_total as string,
+          order_id: item.order_id as string,
+          product_names: item.product_names as string[],
+          image_urls: item.image_urls as string[]
+        }));
+
+        onSuccessConnect(purchaseHistory);
       } catch (error) {
         console.error('Failed to create hosted link:', error);
       }
