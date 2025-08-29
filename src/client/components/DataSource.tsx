@@ -25,9 +25,9 @@ export function DataSource({
   const [isLoading, setIsLoading] = useState(false);
 
   const handleConnect = async () => {
-    setIsLoading(true);
     if (settings.USE_HOSTED_LINK) {
       try {
+        setIsLoading(true);
         // Create hosted link
         const response = await fetch('/getgather/link/create', {
           method: 'POST',
@@ -127,7 +127,6 @@ export function DataSource({
       }
     } else {
       setIsDialogOpen(true);
-      setIsLoading(false);
     }
   };
 
