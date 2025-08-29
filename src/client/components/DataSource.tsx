@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { SignInDialog } from './SignInDialog';
 import type { BrandConfig } from '../modules/Config';
 import type { PurchaseHistory } from '../modules/DataTransformSchema';
+import { transformData } from '../modules/DataTransformSchema';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { settings } from '../config';
@@ -20,10 +22,13 @@ export function DataSource({
   isConnected,
 }: DataSourceProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleConnect = async () => {
+    setIsLoading(true);
     if (settings.USE_HOSTED_LINK) {
       try {
+        // Create hosted link
         const response = await fetch('/getgather/link/create', {
           method: 'POST',
           headers: {
@@ -40,17 +45,89 @@ export function DataSource({
         }
 
         const data = await response.json();
-        
+
+        // Open hosted link in pop up window
         window.open(
           data.hosted_link_url,
           '_blank',
           'width=500,height=600,menubar=no,toolbar=no,location=no,status=no'
         );
+
+        // Poll for profile ID with retry logic
+        let profileId;
+        let attempts = 0;
+        const maxAttempts = 120; // 2 minute max
+
+        while (attempts < maxAttempts) {
+          try {
+            const responseLinkStatus = await fetch(`/getgather/link/status/${data.link_id}`, {
+              method: 'GET',
+              headers: {
+                'accept': 'application/json',
+                'Content-Type': 'application/json',
+              },
+            });
+
+            if (responseLinkStatus.ok) {
+              const linkStatus = await responseLinkStatus.json();
+              if (linkStatus.status === 'completed') {
+                profileId = linkStatus.profile_id;
+                break;
+              }
+            }
+          } catch (error) {
+            console.log('Polling attempt failed:', error);
+          }
+
+          attempts++;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        if (!profileId) {
+          throw new Error('Profile ID not available after polling');
+        }
+
+        // Call auth to get purchaseHistory
+        const responseAuth = await fetch(`/getgather/auth/${brandConfig.brand_id}`, {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            profile_id: profileId,
+            extract: true,
+          })
+        })
+
+        if (!responseAuth.ok) {
+          throw new Error(`HTTP error! status: ${responseAuth.status}`);
+        }
+
+        const auth = await responseAuth.json()
+
+        // Transform the response data
+        const transformedData = transformData(auth["extract_result"], brandConfig.dataTransform);
+        
+        // Convert the transformed data to PurchaseHistory format
+        const purchaseHistory: PurchaseHistory[] = transformedData.map(item => ({
+          brand: brandConfig.brand_name,
+          order_date: item.order_date as Date || null,
+          order_total: item.order_total as string,
+          order_id: item.order_id as string,
+          product_names: item.product_names as string[],
+          image_urls: item.image_urls as string[]
+        }));
+
+        onSuccessConnect(purchaseHistory);
       } catch (error) {
         console.error('Failed to create hosted link:', error);
+      } finally {
+        setIsLoading(false);
       }
     } else {
       setIsDialogOpen(true);
+      setIsLoading(false);
     }
   };
 
@@ -89,6 +166,11 @@ export function DataSource({
             <Badge variant="secondary" className="text-xs px-2 py-1">
               Connected
             </Badge>
+          ) : isLoading ? (
+            <div className="flex items-center gap-1 text-xs text-gray-600 px-2 py-1">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Connecting...
+            </div>
           ) : (
             <Button
               disabled={disabled}
