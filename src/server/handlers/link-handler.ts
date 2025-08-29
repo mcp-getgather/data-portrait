@@ -1,8 +1,14 @@
 import { Request, Response } from 'express';
+import { z } from 'zod';
 import { settings } from '../config.js';
 import { createSanitizedLogMessage } from '../utils/request-sanitizer.js';
 
-export const handleLinkProxy = async (req: Request, res: Response) => {
+const LinkCreateResponseSchema = z.object({
+  link_id: z.string(),
+  hosted_link_url: z.string(),
+});
+
+export const handleLinkCreate = async (req: Request, res: Response) => {
   try {
     const baseUrl = settings.GETGATHER_URL.replace(/\/$/, '');
     const targetUrl = `${baseUrl}/api/link/create`;
@@ -25,7 +31,15 @@ export const handleLinkProxy = async (req: Request, res: Response) => {
 
     res.status(upstreamResponse.status);
 
-    const responseBody = await upstreamResponse.text();
+    const rawResponseBody = await upstreamResponse.json();
+    const responseBody = LinkCreateResponseSchema.parse(rawResponseBody);
+
+    // replace get gatgather hosted-link with our own
+    responseBody.hosted_link_url = responseBody.hosted_link_url.replace(
+      settings.GETGATHER_URL,
+      settings.APP_HOST
+    );
+
     res.send(responseBody);
 
     console.log('✅ Link created successfully');
@@ -40,7 +54,7 @@ export const handleLinkProxy = async (req: Request, res: Response) => {
   }
 };
 
-export const handleLinkStatusProxy = async (req: Request, res: Response) => {
+export const handleLinkStatus = async (req: Request, res: Response) => {
   try {
     const { linkId } = req.params;
     const baseUrl = settings.GETGATHER_URL.replace(/\/$/, '');
