@@ -87,7 +87,7 @@ export function DataSource({
           throw new Error('Profile ID not available after polling');
         }
 
-        // Call auth to get, pass profile_id on the body
+        // Call auth to get purchaseHistory
         const responseAuth = await fetch(`/getgather/auth/${brandConfig.brand_id}`, {
           method: 'POST',
           headers: {
