@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { SignInDialog } from './SignInDialog';
 import type { BrandConfig } from '../modules/Config';
 import type { PurchaseHistory } from '../modules/DataTransformSchema';
@@ -21,8 +22,10 @@ export function DataSource({
   isConnected,
 }: DataSourceProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleConnect = async () => {
+    setIsLoading(true);
     if (settings.USE_HOSTED_LINK) {
       try {
         // Create hosted link
@@ -119,9 +122,12 @@ export function DataSource({
         onSuccessConnect(purchaseHistory);
       } catch (error) {
         console.error('Failed to create hosted link:', error);
+      } finally {
+        setIsLoading(false);
       }
     } else {
       setIsDialogOpen(true);
+      setIsLoading(false);
     }
   };
 
@@ -160,6 +166,11 @@ export function DataSource({
             <Badge variant="secondary" className="text-xs px-2 py-1">
               Connected
             </Badge>
+          ) : isLoading ? (
+            <div className="flex items-center gap-1 text-xs text-gray-600 px-2 py-1">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Connecting...
+            </div>
           ) : (
             <Button
               disabled={disabled}
