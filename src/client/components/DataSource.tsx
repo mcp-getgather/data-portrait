@@ -53,7 +53,7 @@ export function DataSource({
         // Poll for profile ID with retry logic
         let profileId;
         let attempts = 0;
-        const maxAttempts = 30; // 30 seconds max
+        const maxAttempts = 120; // 2 minute max
 
         while (attempts < maxAttempts) {
           try {

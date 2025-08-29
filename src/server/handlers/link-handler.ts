@@ -25,17 +25,6 @@ export const handleLinkProxy = async (req: Request, res: Response) => {
 
     res.status(upstreamResponse.status);
 
-    upstreamResponse.headers.forEach((value, key) => {
-      const skipHeaders = [
-        'content-encoding',
-        'content-length',
-        'transfer-encoding',
-      ];
-      if (!skipHeaders.includes(key.toLowerCase())) {
-        res.setHeader(key, value);
-      }
-    });
-
     const responseBody = await upstreamResponse.text();
     res.send(responseBody);
 
@@ -58,10 +47,13 @@ export const handleLinkStatusProxy = async (req: Request, res: Response) => {
     const targetUrl = `${baseUrl}/api/link/status/${linkId}`;
 
     const headers = {
+      'Content-Type': 'application/json',
       accept: 'application/json',
     };
 
-    console.log(createSanitizedLogMessage('📊 Link status request', { linkId }));
+    console.log(
+      createSanitizedLogMessage('📊 Link status request', { linkId })
+    );
 
     const upstreamResponse = await fetch(targetUrl, {
       method: 'GET',
@@ -70,17 +62,6 @@ export const handleLinkStatusProxy = async (req: Request, res: Response) => {
     });
 
     res.status(upstreamResponse.status);
-
-    upstreamResponse.headers.forEach((value, key) => {
-      const skipHeaders = [
-        'content-encoding',
-        'content-length',
-        'transfer-encoding',
-      ];
-      if (!skipHeaders.includes(key.toLowerCase())) {
-        res.setHeader(key, value);
-      }
-    });
 
     const responseBody = await upstreamResponse.text();
     res.send(responseBody);
@@ -96,4 +77,3 @@ export const handleLinkStatusProxy = async (req: Request, res: Response) => {
     }
   }
 };
-
