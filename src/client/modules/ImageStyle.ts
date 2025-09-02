@@ -1,4 +1,4 @@
-export type ImageStyle = {
+type ImageStyle = {
   id: string;
   name: string;
   description: string;

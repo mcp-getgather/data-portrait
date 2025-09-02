@@ -8,7 +8,7 @@ export type PurchaseHistory = {
 };
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export type DataFieldMapping = {
+type DataFieldMapping = {
   /** The key name in the output object */
   outputKey: string;
   /** JSONPath-like string to extract value from source data */

@@ -3,7 +3,7 @@
  * Removes or masks sensitive information from request data for logging purposes
  */
 
-export interface SanitizationOptions {
+interface SanitizationOptions {
   maskEmailDomains?: boolean;
   redactPasswords?: boolean;
   redactFields?: string[];
@@ -116,7 +116,7 @@ function sanitizeObject(obj: any, options: SanitizationOptions): any {
  * @param options - Sanitization options
  * @returns Sanitized copy of the data
  */
-export function sanitizeRequestData(
+function sanitizeRequestData(
   data: any,
   options: SanitizationOptions = DEFAULT_OPTIONS
 ): any {

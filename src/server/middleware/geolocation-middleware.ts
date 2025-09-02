@@ -10,7 +10,7 @@ export interface LocationData {
   postal_code?: string | null;
 }
 
-export class GeolocationMiddleware {
+class GeolocationMiddleware {
   private geolocationService: GeolocationService;
 
   constructor(geolocationService: GeolocationService) {
