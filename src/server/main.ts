@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/node';
+import { Socket } from 'net';
 import express from 'express';
 import { errorHandler } from './middleware/error-handler.js';
 import { healthRoutes } from './routes/health-routes.js';
@@ -9,6 +10,7 @@ import { settings } from './config.js';
 import { IPBlockerMiddleware } from './middleware/ip-blocker-middleware.js';
 import { geolocationService } from './services/geolocation-service.js';
 import { imageService } from './services/image-service.js';
+import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -40,6 +42,31 @@ app.use((req, res, next) => {
   }
 
   next();
+});
+
+const createProxy = (path: string) =>
+  createProxyMiddleware({
+    target: `${settings.GETGATHER_URL}${path}`,
+    changeOrigin: true,
+    on: {
+      proxyReq: fixRequestBody,
+      error: (
+        err: Error,
+        req: express.Request,
+        res: express.Response | Socket
+      ) => {
+        console.error(`Proxy req: ${req} error: ${err}`);
+        if ('status' in res) {
+          res.status(500).send('Proxy error occurred');
+        }
+      },
+    },
+  });
+
+const proxyPaths = ['/link', '/assets', '/static/assets', '/api'];
+
+proxyPaths.forEach((path) => {
+  app.use(path, createProxy(path));
 });
 
 // Body parsing middleware
