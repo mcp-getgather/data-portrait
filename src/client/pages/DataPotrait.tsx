@@ -14,6 +14,7 @@ import type { BrandConfig } from '../modules/Config';
 import type { PurchaseHistory } from '../modules/DataTransformSchema';
 import type { ImageData } from '../components/GeneratedImagesGrid';
 import { filterUniqueOrders } from '../utils';
+import { log } from '../utils/log';
 
 const amazonConfig = amazon as BrandConfig;
 const wayfairConfig = wayfair as BrandConfig;
@@ -71,6 +72,11 @@ export function DataPotrait() {
   >(null);
 
   const handleSuccessConnect = (brandName: string, data: PurchaseHistory[]) => {
+    log({
+      message: 'Received orders from client',
+      data: { brandName, data },
+      type: 'server',
+    });
     setConnectedBrands((prev) => [...prev, brandName]);
     setOrders((prev) => {
       const combined = [...prev, ...data];
