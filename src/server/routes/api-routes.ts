@@ -5,11 +5,15 @@ import {
   handleLinkCreate,
   handleLinkStatus,
 } from '../handlers/link-handler.js';
+import { handlePurchaseHistory } from '../handlers/purchase-history-handler.js';
 
 const router = Router();
 
 // Auth proxy endpoint
 router.post('/auth/:brandName', handleAuthProxy);
+
+// Get purchase history
+router.get('/purchase-history/:brandName', handlePurchaseHistory);
 
 // Link creation proxy endpoint
 router.post('/link/create', handleLinkCreate);
