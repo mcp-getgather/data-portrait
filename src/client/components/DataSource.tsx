@@ -109,6 +109,40 @@ const getPurchaseHistory = async (brandConfig: BrandConfig, profileId: string) =
   return purchaseHistory;
 };
 
+
+const mcpGetPurchaseHistory = async (brandConfig: BrandConfig) => {
+  // TODO: open hosted link
+  const response = await fetch(`/getgather/purchase-history/${brandConfig.brand_id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const auth = await response.json();
+
+  // Transform the response data
+  const transformedData = transformData(auth, brandConfig.dataTransform);
+  
+  // Convert the transformed data to PurchaseHistory format
+  const purchaseHistory: PurchaseHistory[] = transformedData.map(item => ({
+    brand: brandConfig.brand_name,
+    order_date: item.order_date as Date || null,
+    order_total: item.order_total as string,
+    order_id: item.order_id as string,
+    product_names: item.product_names as string[],
+    image_urls: item.image_urls as string[]
+  }));
+
+  return purchaseHistory;
+};
+
+
+
 export function DataSource({
   onSuccessConnect,
   disabled,

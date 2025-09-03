@@ -7,14 +7,6 @@ export type PurchaseHistory = {
   image_urls: string[];
 };
 
-export function toPurchaseHistory(
-  brandId: string,
-  data: any[]
-): PurchaseHistory[] {
-  debugger;
-  return [];
-}
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type DataFieldMapping = {
   /** The key name in the output object */
@@ -170,12 +162,20 @@ function applyTransform(
  * Transform raw data using schema configuration
  */
 export function transformData(
-  content: object[],
+  rawData: any,
   schema: DataTransformSchema
 ): { [key: string]: string | string[] | Date | Date[] }[] {
   try {
+    // Get the array of items to transform
+    const dataArray = getNestedValue(rawData, schema.dataPath);
+
+    if (!Array.isArray(dataArray)) {
+      console.warn('Data path does not resolve to an array:', schema.dataPath);
+      return [];
+    }
+
     // Transform each item according to field mappings
-    return content.map((item: any) => {
+    return dataArray.map((item: any) => {
       const transformedItem: {
         [key: string]: string | string[] | Date | Date[];
       } = {};
