@@ -162,13 +162,18 @@ function applyTransform(
  * Transform raw data using schema configuration
  */
 export function transformData(
-  rawData: any,
+  rawData: Array<object> | object,
   schema: DataTransformSchema
 ): { [key: string]: string | string[] | Date | Date[] }[] {
   try {
-    // Get the array of items to transform
-    const dataArray = getNestedValue(rawData, schema.dataPath);
+    var dataArray: Array<any>;
+    if (Array.isArray(rawData)) {
+      dataArray = rawData;
+    } else {
+      dataArray = getNestedValue(rawData, schema.dataPath);
+    }
 
+    // Get the array of items to transform
     if (!Array.isArray(dataArray)) {
       console.warn('Data path does not resolve to an array:', schema.dataPath);
       return [];

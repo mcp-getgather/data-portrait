@@ -5,6 +5,7 @@ import type { PurchaseHistory } from '../modules/DataTransformSchema';
 import { transformData } from '../modules/DataTransformSchema';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { link } from 'node:fs/promises';
 
 interface DataSourceProps {
   onSuccessConnect: (data: PurchaseHistory[]) => void;
@@ -111,7 +112,6 @@ const getPurchaseHistory = async (brandConfig: BrandConfig, profileId: string) =
 
 
 const mcpGetPurchaseHistory = async (brandConfig: BrandConfig) => {
-  // TODO: open hosted link
   const response = await fetch(`/getgather/purchase-history/${brandConfig.brand_id}`, {
     method: 'GET',
     headers: {
@@ -123,22 +123,27 @@ const mcpGetPurchaseHistory = async (brandConfig: BrandConfig) => {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
-  const auth = await response.json();
+  const data = await response.json();
 
-  // Transform the response data
-  const transformedData = transformData(auth, brandConfig.dataTransform);
-  
-  // Convert the transformed data to PurchaseHistory format
-  const purchaseHistory: PurchaseHistory[] = transformedData.map(item => ({
-    brand: brandConfig.brand_name,
-    order_date: item.order_date as Date || null,
-    order_total: item.order_total as string,
-    order_id: item.order_id as string,
-    product_names: item.product_names as string[],
-    image_urls: item.image_urls as string[]
-  }));
+  var purchaseHistory: PurchaseHistory[] = [];
 
-  return purchaseHistory;
+  if (data.content) {
+    const transformedData = transformData(data.content, brandConfig.dataTransform);
+    purchaseHistory = transformedData.map(item => ({
+      brand: brandConfig.brand_name,
+      order_date: item.order_date as Date || null,
+      order_total: item.order_total as string,
+      order_id: item.order_id as string,
+      product_names: item.product_names as string[],
+      image_urls: item.image_urls as string[]
+    }));
+  }
+
+  return {
+    linkId: data.link_id,
+    hostedLinkURL: data.hosted_link_url,
+    purchaseHistory: purchaseHistory,
+  };
 };
 
 
@@ -154,18 +159,41 @@ export function DataSource({
   const handleConnect = async () => {
     setIsLoading(true);
     try {
-      const { linkId, hostedLinkUrl } = await createHostedLink(brandConfig.brand_id);
+      var linkId: string;
+      var hostedLinkURL: string;
+      
+
+      // For now only goodreads is supported mcp tool call
+      if (brandConfig.brand_id == "goodreads") {
+        const rr = await mcpGetPurchaseHistory(brandConfig)
+        linkId = rr.linkId
+        hostedLinkURL = rr.hostedLinkURL
+      } else {
+         const rr =  await createHostedLink(brandConfig.brand_id);
+        linkId = rr.linkId
+        hostedLinkURL = rr.hostedLinkUrl
+      }
       
       // Open hosted link in pop up window
       window.open(
-        hostedLinkUrl,
+        hostedLinkURL,
         '_blank',
         'width=500,height=600,menubar=no,toolbar=no,location=no,status=no'
       );
       
       const profileId = await pollForProfileId(linkId);
-      const purchaseHistory = await getPurchaseHistory(brandConfig, profileId);
-      onSuccessConnect(purchaseHistory);
+
+
+      var purchaseHistories: PurchaseHistory[]
+      if (brandConfig.brand_id == "goodreads") {
+        const rr = await mcpGetPurchaseHistory(brandConfig)
+        purchaseHistories = rr.purchaseHistory
+      } else {
+        purchaseHistories = await getPurchaseHistory(brandConfig, profileId);
+      }
+
+
+      onSuccessConnect(purchaseHistories);
     } catch (error) {
       console.error('Failed to create hosted link:', error);
     } finally {
