@@ -5,7 +5,10 @@ import {
   handleLinkCreate,
   handleLinkStatus,
 } from '../handlers/link-handler.js';
-import { handlePurchaseHistory } from '../handlers/purchase-history-handler.js';
+import {
+  handlePurchaseHistory,
+  handleMcpPoll,
+} from '../handlers/mcp-handler.js';
 
 const router = Router();
 
@@ -14,6 +17,9 @@ router.post('/auth/:brandName', handleAuthProxy);
 
 // Get purchase history
 router.get('/purchase-history/:brandName', handlePurchaseHistory);
+
+// MCP poll endpoint
+router.get('/mcp-poll/:linkId', handleMcpPoll);
 
 // Link creation proxy endpoint
 router.post('/link/create', handleLinkCreate);

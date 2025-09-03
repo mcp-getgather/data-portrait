@@ -3,7 +3,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { z } from 'zod';
 
-// MCP Client setup
+// Single MCP Client instance
 let client: Client | null = null;
 
 async function getOrCreateClient(): Promise<Client> {
@@ -20,6 +20,32 @@ async function getOrCreateClient(): Promise<Client> {
 const tools: Record<string, string> = {
   goodreads: 'goodreads_get_book_list',
 };
+
+// Function to poll auth status
+async function pollAuthStatus(
+  client: Client,
+  linkId: string
+): Promise<boolean> {
+  try {
+    const result = await client.callTool({
+      name: 'poll_auth',
+      arguments: { link_id: linkId },
+    });
+
+    console.log('Poll auth result:', result.structuredContent);
+
+    // Check if auth is completed - handle different response formats
+    const response = result.structuredContent as any;
+    return (
+      response?.status === 'completed' ||
+      response?.status === 'FINISHED' ||
+      response?.auth_completed === true
+    );
+  } catch (error) {
+    console.error('Failed to poll auth status:', error);
+    return false;
+  }
+}
 
 const McpResponse = z.object({
   // Auth fields (when auth needed)
@@ -57,11 +83,13 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
 
   const toolName = tools[brandName];
   if (!toolName) {
-    return res.status(400).json({ error: 'Invalid brand name' });
+    res.status(400).json({ error: 'Invalid brand name' });
+    return;
   }
 
   try {
     const mcpClient = await getOrCreateClient();
+
     const result = await mcpClient.callTool({ name: toolName });
 
     console.warn(
@@ -73,6 +101,7 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
       'DEBUGPRINT[506]: purchase-history-handler.ts:67: mcpResponse=',
       mcpResponse
     );
+
     let content: Array<any> = [];
     if (mcpResponse.content) {
       console.warn(
@@ -91,9 +120,32 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
       content,
     };
 
-    return res.json(response);
+    res.json(response);
   } catch (error) {
     console.error('MCP client error:', error);
-    return res.status(500).json({ error: 'Failed to connect to MCP server' });
+    res.status(500).json({ error: 'Failed to connect to MCP server' });
+  }
+};
+
+export const handleMcpPoll = async (req: Request, res: Response) => {
+  const { linkId } = req.params;
+
+  if (!linkId) {
+    res.status(400).json({ error: 'link_id is required' });
+    return;
+  }
+
+  try {
+    const mcpClient = await getOrCreateClient();
+
+    const authCompleted = await pollAuthStatus(mcpClient, linkId);
+
+    res.json({
+      auth_completed: authCompleted,
+      link_id: linkId,
+    });
+  } catch (error) {
+    console.error('MCP poll error:', error);
+    res.status(500).json({ error: 'Failed to poll MCP server' });
   }
 };

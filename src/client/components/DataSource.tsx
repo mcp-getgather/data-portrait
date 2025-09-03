@@ -5,7 +5,6 @@ import type { PurchaseHistory } from '../modules/DataTransformSchema';
 import { transformData } from '../modules/DataTransformSchema';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { link } from 'node:fs/promises';
 
 interface DataSourceProps {
   onSuccessConnect: (data: PurchaseHistory[]) => void;
@@ -146,6 +145,35 @@ const mcpGetPurchaseHistory = async (brandConfig: BrandConfig) => {
   };
 };
 
+const mcpPollForAuthCompletion = async (linkId: string) => {
+  let attempts = 0;
+  const maxAttempts = 120; // 2 minute max
+
+  while (attempts < maxAttempts) {
+      const response = await fetch(`/getgather/mcp-poll/${linkId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.authCompleted) {
+        return true;
+      }
+
+    attempts++;
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
+  throw new Error('Authentication not completed after polling timeout');
+};
+
 
 
 export function DataSource({
@@ -159,41 +187,31 @@ export function DataSource({
   const handleConnect = async () => {
     setIsLoading(true);
     try {
-      var linkId: string;
-      var hostedLinkURL: string;
-      
+        const rr = await mcpGetPurchaseHistory(brandConfig);
 
-      // For now only goodreads is supported mcp tool call
-      if (brandConfig.brand_id == "goodreads") {
-        const rr = await mcpGetPurchaseHistory(brandConfig)
-        linkId = rr.linkId
-        hostedLinkURL = rr.hostedLinkURL
-      } else {
-         const rr =  await createHostedLink(brandConfig.brand_id);
-        linkId = rr.linkId
-        hostedLinkURL = rr.hostedLinkUrl
-      }
-      
-      // Open hosted link in pop up window
-      window.open(
-        hostedLinkURL,
-        '_blank',
-        'width=500,height=600,menubar=no,toolbar=no,location=no,status=no'
-      );
-      
-      const profileId = await pollForProfileId(linkId);
+        // got nothing
+        if (!rr.linkId && !rr.hostedLinkURL && rr.purchaseHistory.length == 0) {
+          throw new Error('No data received from MCP service');
+        }
+        
+        if (rr.purchaseHistory && rr.purchaseHistory.length > 0) {
+          onSuccessConnect(rr.purchaseHistory);
+          return;
+        }
 
+        debugger;
+        // Open hosted link in pop up window
+        window.open(
+          rr.hostedLinkURL,
+          '_blank',
+          'width=500,height=600,menubar=no,toolbar=no,location=no,status=no'
+        );
+          
+        // Wait until auth successful
+        await mcpPollForAuthCompletion(rr.linkId);
 
-      var purchaseHistories: PurchaseHistory[]
-      if (brandConfig.brand_id == "goodreads") {
-        const rr = await mcpGetPurchaseHistory(brandConfig)
-        purchaseHistories = rr.purchaseHistory
-      } else {
-        purchaseHistories = await getPurchaseHistory(brandConfig, profileId);
-      }
-
-
-      onSuccessConnect(purchaseHistories);
+        // Recursively call to fetch updated purchase history after authentication
+        handleConnect();
     } catch (error) {
       console.error('Failed to create hosted link:', error);
     } finally {
