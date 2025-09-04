@@ -4,19 +4,19 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { z } from 'zod';
 import { settings } from '../config.js';
 
-const sessionClients = new Map<string, Client>();
+const mcpClients = new Map<string, Client>();
 
 async function getOrCreateClient(sessionId: string): Promise<Client> {
-  if (!sessionClients.has(sessionId)) {
+  if (!mcpClients.has(sessionId)) {
     const client = new Client({ name: 'data-portrait', version: '1.0.0' });
     const transport = new StreamableHTTPClientTransport(
       new URL(`${settings.GETGATHER_URL}/mcp`)
     );
     await client.connect(transport);
-    sessionClients.set(sessionId, client);
+    mcpClients.set(sessionId, client);
   }
 
-  return sessionClients.get(sessionId)!;
+  return mcpClients.get(sessionId)!;
 }
 
 const tools: Record<string, string> = {
