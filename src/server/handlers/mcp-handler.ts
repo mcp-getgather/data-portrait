@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { z } from 'zod';
+import { settings } from '../config.js';
 
 let client: Client | null = null;
 
@@ -9,8 +10,7 @@ async function getOrCreateClient(): Promise<Client> {
   if (!client) {
     client = new Client({ name: 'data-portrait', version: '1.0.0' });
     const transport = new StreamableHTTPClientTransport(
-      // TODO: from config
-      new URL('http://127.0.0.1:23456/mcp')
+      new URL(`${settings.GETGATHER_URL}/mcp`)
     );
     await client.connect(transport);
   }
