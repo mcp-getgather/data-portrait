@@ -14,12 +14,15 @@ interface DataSourceProps {
 }
 
 const getPurchaseHistory = async (brandConfig: BrandConfig) => {
-  const response = await fetch(`/getgather/purchase-history/${brandConfig.brand_id}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
+  const response = await fetch(
+    `/getgather/purchase-history/${brandConfig.brand_id}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
     }
-  });
+  );
 
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
@@ -27,17 +30,20 @@ const getPurchaseHistory = async (brandConfig: BrandConfig) => {
 
   const data = await response.json();
 
-  var purchaseHistory: PurchaseHistory[] = [];
+  let purchaseHistory: PurchaseHistory[] = [];
 
   if (data.content) {
-    const transformedData = transformData(data.content, brandConfig.dataTransform);
-    purchaseHistory = transformedData.map(item => ({
+    const transformedData = transformData(
+      data.content,
+      brandConfig.dataTransform
+    );
+    purchaseHistory = transformedData.map((item) => ({
       brand: brandConfig.brand_name,
-      order_date: item.order_date as Date || null,
+      order_date: (item.order_date as Date) || null,
       order_total: item.order_total as string,
       order_id: item.order_id as string,
       product_names: item.product_names as string[],
-      image_urls: item.image_urls as string[]
+      image_urls: item.image_urls as string[],
     }));
   }
 
@@ -49,27 +55,20 @@ const getPurchaseHistory = async (brandConfig: BrandConfig) => {
 };
 
 const pollForAuthCompletion = async (linkId: string) => {
-  const maxAttempts = 120;
-  for (let attempts = 0; attempts < maxAttempts; attempts++) {
-    const response = await fetch(`/getgather/mcp-poll/${linkId}`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+  const response = await fetch(`/getgather/mcp-poll/${linkId}`);
 
-    // Auth completed
-    const data = await response.json();
-    if (data.auth_completed) {
-      return true;
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 1000));
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
   }
 
-  throw new Error('Authentication not completed after polling timeout');
+  // Auth completed
+  const data = await response.json();
+  if (data.auth_completed) {
+    return true;
+  }
+
+  throw new Error('Authentication failed or timed out');
 };
-
-
 
 export function DataSource({
   onSuccessConnect,
@@ -82,32 +81,36 @@ export function DataSource({
   const handleConnect = async () => {
     setIsLoading(true);
     try {
-        const result = await getPurchaseHistory(brandConfig);
+      const result = await getPurchaseHistory(brandConfig);
 
-        // got nothing
-        if (!result.linkId && !result.hostedLinkURL && result.purchaseHistory.length == 0) {
-          throw new Error('No data received from MCP service');
-        }
+      // got nothing
+      if (
+        !result.linkId &&
+        !result.hostedLinkURL &&
+        result.purchaseHistory.length == 0
+      ) {
+        throw new Error('No data received from MCP service');
+      }
 
-        // If we already have purchase history, use it directly
-        if (result.purchaseHistory && result.purchaseHistory.length > 0) {
-          onSuccessConnect(result.purchaseHistory);
-          return;
-        }
-       
-        // Open hosted link in pop up window for authentication
-        window.open(
-          result.hostedLinkURL,
-          '_blank',
-          'width=500,height=600,menubar=no,toolbar=no,location=no,status=no'
-        );
-          
-        // Wait until auth successful
-        await pollForAuthCompletion(result.linkId);
+      // If we already have purchase history, use it directly
+      if (result.purchaseHistory && result.purchaseHistory.length > 0) {
+        onSuccessConnect(result.purchaseHistory);
+        return;
+      }
 
-        // Fetch purchase history after authentication
-        const updatedResult = await getPurchaseHistory(brandConfig);
-        onSuccessConnect(updatedResult.purchaseHistory);
+      // Open hosted link in pop up window for authentication
+      window.open(
+        result.hostedLinkURL,
+        '_blank',
+        'width=500,height=600,menubar=no,toolbar=no,location=no,status=no'
+      );
+
+      // Wait until auth successful
+      await pollForAuthCompletion(result.linkId);
+
+      // Fetch purchase history after authentication
+      const updatedResult = await getPurchaseHistory(brandConfig);
+      onSuccessConnect(updatedResult.purchaseHistory);
     } catch (error) {
       console.error('Failed to create hosted link:', error);
     } finally {
@@ -163,7 +166,6 @@ export function DataSource({
           )}
         </div>
       </div>
-
     </>
   );
 }
