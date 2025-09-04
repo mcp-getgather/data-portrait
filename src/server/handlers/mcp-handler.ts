@@ -17,8 +17,10 @@ async function getOrCreateClient(): Promise<Client> {
   return client;
 }
 
-// TODO: other tools
 const tools: Record<string, string> = {
+  amazon: 'amazon_get_purchase_history',
+  officedepot: 'officedepot_get_order_history',
+  wayfair: 'wayfair_get_order_history',
   goodreads: 'goodreads_get_book_list',
 };
 
