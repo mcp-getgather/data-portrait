@@ -13,7 +13,7 @@ interface DataSourceProps {
   isConnected?: boolean;
 }
 
-const mcpGetPurchaseHistory = async (brandConfig: BrandConfig) => {
+const getPurchaseHistory = async (brandConfig: BrandConfig) => {
   const response = await fetch(`/getgather/purchase-history/${brandConfig.brand_id}`, {
     method: 'GET',
     headers: {
@@ -48,8 +48,9 @@ const mcpGetPurchaseHistory = async (brandConfig: BrandConfig) => {
   };
 };
 
-const mcpPollForAuthCompletion = async (linkId: string) => {
-  for (let attempts = 0; attempts < 120; attempts++) {
+const pollForAuthCompletion = async (linkId: string) => {
+  const maxAttempts = 120;
+  for (let attempts = 0; attempts < maxAttempts; attempts++) {
     const response = await fetch(`/getgather/mcp-poll/${linkId}`);
     
     if (!response.ok) {
@@ -81,7 +82,7 @@ export function DataSource({
   const handleConnect = async () => {
     setIsLoading(true);
     try {
-        const result = await mcpGetPurchaseHistory(brandConfig);
+        const result = await getPurchaseHistory(brandConfig);
 
         // got nothing
         if (!result.linkId && !result.hostedLinkURL && result.purchaseHistory.length == 0) {
@@ -102,10 +103,10 @@ export function DataSource({
         );
           
         // Wait until auth successful
-        await mcpPollForAuthCompletion(result.linkId);
+        await pollForAuthCompletion(result.linkId);
 
         // Fetch purchase history after authentication
-        const updatedResult = await mcpGetPurchaseHistory(brandConfig);
+        const updatedResult = await getPurchaseHistory(brandConfig);
         onSuccessConnect(updatedResult.purchaseHistory);
     } catch (error) {
       console.error('Failed to create hosted link:', error);

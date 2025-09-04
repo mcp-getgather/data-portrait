@@ -37,8 +37,13 @@ const McpResponse = z.object({
       z.object({
         name: z.string(),
         parsed: z.boolean(),
-        parse_schema: z.record(z.unknown()),
-        content: z.array(z.record(z.unknown())),
+        parse_schema: z.record(z.unknown()).nullable(),
+        content: z.union([
+          // wayfair response unparsed string
+          z.string(),
+          // amazon, officedepot, goo is parsed
+          z.array(z.record(z.unknown())),
+        ]),
       })
     )
     .optional(),
@@ -47,7 +52,7 @@ const McpResponse = z.object({
 type PurchaseHistoryResponse = {
   link_id: string;
   hosted_link_url: string;
-  content: Array<any>;
+  content: Array<any> | Record<string, any>;
 };
 
 export const handlePurchaseHistory = async (req: Request, res: Response) => {
@@ -59,24 +64,32 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
     return;
   }
 
-  try {
-    const mcpClient = await getOrCreateClient();
+  const mcpClient = await getOrCreateClient();
+  const result = await mcpClient.callTool({ name: toolName });
 
-    const result = await mcpClient.callTool({ name: toolName });
+  const mcpResponse = McpResponse.parse(result.structuredContent);
 
-    const mcpResponse = McpResponse.parse(result.structuredContent);
+  const response: PurchaseHistoryResponse = {
+    link_id: mcpResponse.link_id || '',
+    hosted_link_url: mcpResponse.url || '',
+    content: [],
+  };
 
-    const response: PurchaseHistoryResponse = {
-      link_id: mcpResponse.link_id || '',
-      hosted_link_url: mcpResponse.url || '',
-      content: mcpResponse.extract_result?.[0]?.content || [],
-    };
-
+  // didn't have any content
+  if (!mcpResponse.extract_result?.[0]?.content) {
     res.json(response);
-  } catch (error) {
-    console.error('MCP client error:', error);
-    res.status(500).json({ error: 'Failed to connect to MCP server' });
+    return;
   }
+
+  const rawContent = mcpResponse.extract_result[0].content;
+
+  if (typeof rawContent === 'string') {
+    response.content = JSON.parse(rawContent);
+  } else {
+    response.content = rawContent;
+  }
+
+  res.json(response);
 };
 
 export const handleMcpPoll = async (req: Request, res: Response) => {
