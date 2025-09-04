@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/node';
 import { Socket } from 'net';
 import express from 'express';
+import session from 'express-session';
 import { errorHandler } from './middleware/error-handler.js';
 import { healthRoutes } from './routes/health-routes.js';
 import { apiRoutes } from './routes/api-routes.js';
@@ -68,6 +69,20 @@ const proxyPaths = ['/link', '/__assets', '/__static/assets', '/api'];
 proxyPaths.forEach((path) => {
   app.use(path, createProxy(path));
 });
+
+// Session middleware
+app.use(
+  session({
+    secret: settings.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
+  })
+);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));

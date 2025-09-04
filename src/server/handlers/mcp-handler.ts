@@ -4,17 +4,19 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { z } from 'zod';
 import { settings } from '../config.js';
 
-let client: Client | null = null;
+const sessionClients = new Map<string, Client>();
 
-async function getOrCreateClient(): Promise<Client> {
-  if (!client) {
-    client = new Client({ name: 'data-portrait', version: '1.0.0' });
+async function getOrCreateClient(sessionId: string): Promise<Client> {
+  if (!sessionClients.has(sessionId)) {
+    const client = new Client({ name: 'data-portrait', version: '1.0.0' });
     const transport = new StreamableHTTPClientTransport(
       new URL(`${settings.GETGATHER_URL}/mcp`)
     );
     await client.connect(transport);
+    sessionClients.set(sessionId, client);
   }
-  return client;
+
+  return sessionClients.get(sessionId)!;
 }
 
 const tools: Record<string, string> = {
@@ -64,7 +66,7 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
     return;
   }
 
-  const mcpClient = await getOrCreateClient();
+  const mcpClient = await getOrCreateClient(req.sessionID);
   const result = await mcpClient.callTool({ name: toolName });
 
   const mcpResponse = McpResponse.parse(result.structuredContent);
@@ -94,7 +96,8 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
 
 export const handleMcpPoll = async (req: Request, res: Response) => {
   const { linkId } = req.params;
-  const client = await getOrCreateClient();
+
+  const client = await getOrCreateClient(req.sessionID);
 
   const result = await client.callTool({
     name: 'poll_auth',
