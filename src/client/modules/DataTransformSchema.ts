@@ -166,6 +166,9 @@ export function transformData(
   schema: DataTransformSchema
 ): { [key: string]: string | string[] | Date | Date[] }[] {
   try {
+    // Handle both pre-processed arrays and raw objects that need path extraction.
+    // Some data sources (like MCP calls) return pre-processed arrays,
+    // while others (like Wayfair GraphQL) require extracting data using schema.dataPath
     var dataArray: Array<any>;
     if (Array.isArray(rawData)) {
       dataArray = rawData;
@@ -173,7 +176,6 @@ export function transformData(
       dataArray = getNestedValue(rawData, schema.dataPath);
     }
 
-    // Get the array of items to transform
     if (!Array.isArray(dataArray)) {
       console.warn('Data path does not resolve to an array:', schema.dataPath);
       return [];
