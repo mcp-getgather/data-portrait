@@ -12,4 +12,5 @@ export const settings = {
   TOGETHER_API_KEY: process.env.TOGETHER_API_KEY || '',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
   SENTRY_DSN: process.env.SENTRY_DSN || '',
+  SESSION_SECRET: process.env.SESSION_SECRET || '',
 } as const;
