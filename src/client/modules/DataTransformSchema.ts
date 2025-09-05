@@ -162,12 +162,19 @@ function applyTransform(
  * Transform raw data using schema configuration
  */
 export function transformData(
-  rawData: any,
+  rawData: Array<object> | object,
   schema: DataTransformSchema
 ): { [key: string]: string | string[] | Date | Date[] }[] {
   try {
-    // Get the array of items to transform
-    const dataArray = getNestedValue(rawData, schema.dataPath);
+    // Handle both pre-processed arrays and raw objects that need path extraction.
+    // Some data sources (like MCP calls) return pre-processed arrays,
+    // while others (like Wayfair GraphQL) require extracting data using schema.dataPath
+    var dataArray: Array<any>;
+    if (Array.isArray(rawData)) {
+      dataArray = rawData;
+    } else {
+      dataArray = getNestedValue(rawData, schema.dataPath);
+    }
 
     if (!Array.isArray(dataArray)) {
       console.warn('Data path does not resolve to an array:', schema.dataPath);
