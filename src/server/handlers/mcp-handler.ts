@@ -1,21 +1,6 @@
 import { Request, Response } from 'express';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { z } from 'zod';
-import { settings } from '../config.js';
-
-let client: Client | null = null;
-
-async function getOrCreateClient(): Promise<Client> {
-  if (!client) {
-    client = new Client({ name: 'data-portrait', version: '1.0.0' });
-    const transport = new StreamableHTTPClientTransport(
-      new URL(`${settings.GETGATHER_URL}/mcp`)
-    );
-    await client.connect(transport);
-  }
-  return client;
-}
+import { mcpClientManager } from '../mcp-client.js';
 
 const tools: Record<string, string> = {
   amazon: 'amazon_get_purchase_history',
@@ -64,7 +49,7 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
     return;
   }
 
-  const mcpClient = await getOrCreateClient();
+  const mcpClient = await mcpClientManager.get(req.sessionID);
   const result = await mcpClient.callTool({ name: toolName });
 
   const mcpResponse = McpResponse.parse(result.structuredContent);
@@ -94,9 +79,8 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
 
 export const handleMcpPoll = async (req: Request, res: Response) => {
   const { linkId } = req.params;
-  const client = await getOrCreateClient();
-
-  const result = await client.callTool({
+  const mcpClient = await mcpClientManager.get(req.sessionID);
+  const result = await mcpClient.callTool({
     name: 'poll_auth',
     arguments: { link_id: linkId },
   });
