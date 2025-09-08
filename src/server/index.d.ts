@@ -5,6 +5,7 @@ declare global {
     interface Request {
       location?: LocationData;
       sessionID: string;
+      session?: { createdAt?: number };
     }
   }
 }

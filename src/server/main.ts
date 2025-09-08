@@ -87,6 +87,14 @@ app.use(
     },
   })
 );
+app.use((req, res, next) => {
+  if (req) {
+    if (req.session) {
+      req.session.createdAt = Date.now();
+    }
+  }
+  next();
+});
 
 app.use(new IPBlockerMiddleware(geolocationService).middleware);
 
