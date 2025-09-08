@@ -11,6 +11,7 @@ import { IPBlockerMiddleware } from './middleware/ip-blocker-middleware.js';
 import { geolocationService } from './services/geolocation-service.js';
 import { imageService } from './services/image-service.js';
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
+import session from 'express-session';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -72,6 +73,29 @@ proxyPaths.forEach((path) => {
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Session middleware
+app.use(
+  session({
+    secret: settings.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
+  })
+);
+app.use((req, res, next) => {
+  if (req) {
+    if (req.session) {
+      req.session.createdAt = Date.now();
+    }
+  }
+  next();
+});
+
 app.use(new IPBlockerMiddleware(geolocationService).middleware);
 
 // Serve static files from the React app
