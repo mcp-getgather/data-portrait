@@ -7,7 +7,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { settings } from './config.js';
 
 class MCPClient {
-  client: Client;
+  private client: Client;
   lastAccessed: Date;
 
   constructor() {
