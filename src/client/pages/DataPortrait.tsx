@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { EmptyState } from '../components/EmptyState';
-import { PurchaseDataDisplay } from '../components/PurchaseDataDisplay';
-import { GeneratedImagesGrid } from '../components/GeneratedImagesGrid';
-import { ImagePreviewModal } from '../components/ImagePreviewModal';
-import { Sidebar } from '../components/Sidebar';
-import amazon from '../config/amazon.json';
-import wayfair from '../config/wayfair.json';
-import officedepot from '../config/officedepot.json';
-import goodreads from '../config/goodreads.json';
-import type { BrandConfig } from '../modules/Config';
-import type { PurchaseHistory } from '../modules/DataTransformSchema';
-import type { ImageData } from '../components/GeneratedImagesGrid';
-import { filterUniqueOrders } from '../utils';
-import { log } from '../utils/log';
+import { Button } from '@/components/ui/button.js';
+import { EmptyState } from '../components/EmptyState.js';
+import { PurchaseDataDisplay } from '../components/PurchaseDataDisplay.js';
+import { GeneratedImagesGrid } from '../components/GeneratedImagesGrid.js';
+import { ImagePreviewModal } from '../components/ImagePreviewModal.js';
+import { Sidebar } from '../components/Sidebar.js';
+import amazon from '../config/amazon.json' with { type: 'json' };
+import wayfair from '../config/wayfair.json' with { type: 'json' };
+import officedepot from '../config/officedepot.json' with { type: 'json' };
+import goodreads from '../config/goodreads.json' with { type: 'json' };
+import type { BrandConfig } from '../modules/Config.js';
+import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
+import type { ImageData } from '../components/GeneratedImagesGrid.js';
+import { filterUniqueOrders } from '../utils/index.js';
+import { log } from '../utils/log.js';
 
 const amazonConfig = amazon as BrandConfig;
 const wayfairConfig = wayfair as BrandConfig;
@@ -56,7 +56,7 @@ const sampleOrders: PurchaseHistory[] = [
   },
 ];
 
-export function DataPotrait() {
+export function DataPortrait() {
   const [orders, setOrders] = useState<PurchaseHistory[]>([]);
   const [connectedBrands, setConnectedBrands] = useState<string[]>([]);
   const [selectedGender, setSelectedGender] = useState('Female');

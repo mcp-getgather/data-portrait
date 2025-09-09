@@ -1,12 +1,12 @@
 import { X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { DataConnectors } from './DataConnectors';
-import { GenderSelector } from './GenderSelector';
-import { TraitsSelector } from './TraitsSelector';
-import { ImageStyleSelector } from './ImageStyleSelector';
+import { Button } from '@/components/ui/button.js';
+import { DataConnectors } from './DataConnectors.js';
+import { GenderSelector } from './GenderSelector.js';
+import { TraitsSelector } from './TraitsSelector.js';
+import { ImageStyleSelector } from './ImageStyleSelector.js';
 import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
-import { ModelSelector } from './ModelSelector';
+import { ModelSelector } from './ModelSelector.js';
 
 type SidebarProps = {
   isOpen: boolean;

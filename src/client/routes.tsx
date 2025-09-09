@@ -1,9 +1,9 @@
 import { createBrowserRouter } from 'react-router-dom';
-import { DataPotrait } from './pages/DataPotrait';
+import { DataPortrait as DataPortrait } from './pages/DataPortrait.js';
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <DataPotrait />,
+    element: <DataPortrait />,
   },
 ]);

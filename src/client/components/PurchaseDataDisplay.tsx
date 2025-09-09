@@ -6,8 +6,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+} from '@/components/ui/card.js';
+import { Button } from '@/components/ui/button.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 
 type PurchaseDataDisplayProps = {
