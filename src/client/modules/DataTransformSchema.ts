@@ -83,7 +83,7 @@ function parseReturnDate(returnDateStr: string) {
 function applyTransform(
   value: any,
   mapping: DataFieldMapping
-): string | string[] | Date {
+): string | (string | Date)[] | Date {
   if (value === undefined || value === null) {
     if (mapping.convertToArray) {
       return [mapping.defaultValue || ''];
@@ -152,7 +152,7 @@ function applyTransform(
   const result = getValue();
 
   if (mapping.convertToArray) {
-    return Array.isArray(result) ? result : result;
+    return Array.isArray(result) ? result : [result];
   }
 
   return result;
@@ -164,7 +164,7 @@ function applyTransform(
 export function transformData(
   rawData: Array<object> | object,
   schema: DataTransformSchema
-): { [key: string]: string | string[] | Date | Date[] }[] {
+): { [key: string]: string | (string | Date)[] | Date }[] {
   try {
     // Handle both pre-processed arrays and raw objects that need path extraction.
     // Some data sources (like MCP calls) return pre-processed arrays,
@@ -184,7 +184,7 @@ export function transformData(
     // Transform each item according to field mappings
     return dataArray.map((item: any) => {
       const transformedItem: {
-        [key: string]: string | string[] | Date | Date[];
+        [key: string]: string | (string | Date)[] | Date;
       } = {};
       schema.fieldMappings.forEach((mapping) => {
         const rawValue = getNestedValue(item, mapping.sourcePath);
