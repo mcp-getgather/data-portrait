@@ -52,6 +52,7 @@
     "@playwright/test": "^1.53.2",
     "@tailwindcss/line-clamp": "^0.4.4",
     "@types/express": "^5.0.1",
+    "@types/express-session": "^1.18.2",
     "@types/node": "^22.15.2",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",

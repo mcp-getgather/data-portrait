@@ -1,6 +1,6 @@
 import { CheckCircle2 } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert.js';
+import { Badge } from '@/components/ui/badge.js';
 import { DataSource } from './DataSource.js';
 import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';

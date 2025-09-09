@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import type { BrandConfig } from '../modules/Config';
-import type { PurchaseHistory } from '../modules/DataTransformSchema';
-import { transformData } from '../modules/DataTransformSchema';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import type { BrandConfig } from '../modules/Config.js';
+import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
+import { transformData } from '../modules/DataTransformSchema.js';
+import { Button } from '@/components/ui/button.js';
+import { Badge } from '@/components/ui/badge.js';
 
 interface DataSourceProps {
   onSuccessConnect: (data: PurchaseHistory[]) => void;

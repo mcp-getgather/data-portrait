@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button.js';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { IMAGE_STYLES, STYLE_CATEGORIES } from '../modules/ImageStyle';
+} from '@/components/ui/popover.js';
+import { IMAGE_STYLES, STYLE_CATEGORIES } from '../modules/ImageStyle.js';
 
 type ImageStyleSelectorProps = {
   selectedImageStyle: string;

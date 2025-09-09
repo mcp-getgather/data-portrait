@@ -1,7 +1,7 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { Image } from '@/components/ui/image';
-import { Badge } from '@/components/ui/badge';
-import { IMAGE_STYLES } from '../modules/ImageStyle';
+import { Card, CardContent } from '@/components/ui/card.js';
+import { Image } from '@/components/ui/image.js';
+import { Badge } from '@/components/ui/badge.js';
+import { IMAGE_STYLES } from '../modules/ImageStyle.js';
 
 export type ImageData = {
   url: string;

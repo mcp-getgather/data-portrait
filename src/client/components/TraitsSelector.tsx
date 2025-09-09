@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge.js';
+import { Button } from '@/components/ui/button.js';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
+} from '@/components/ui/popover.js';
 
 const TRAITS_OPTIONS = [
   {

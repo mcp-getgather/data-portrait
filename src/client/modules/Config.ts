@@ -1,5 +1,5 @@
-import type { DataTransformSchema } from './DataTransformSchema';
-import type { Schema } from './Schema';
+import type { DataTransformSchema } from './DataTransformSchema.js';
+import type { Schema } from './Schema.js';
 
 export type BrandConfig = {
   brand_id: string;

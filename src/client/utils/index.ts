@@ -1,4 +1,4 @@
-import type { PurchaseHistory } from '../modules/DataTransformSchema';
+import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 
 export const filterUniqueOrders = (
   orders: PurchaseHistory[]

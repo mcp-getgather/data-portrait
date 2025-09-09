@@ -152,7 +152,7 @@ function applyTransform(
   const result = getValue();
 
   if (mapping.convertToArray) {
-    return Array.isArray(result) ? result : [result];
+    return Array.isArray(result) ? result : result;
   }
 
   return result;
