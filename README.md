@@ -42,7 +42,6 @@ Create a `.env` file in the project root with the following variables:
 ```env
 # GetGather API Configuration
 GETGATHER_URL=https://api.getgather.com
-GETGATHER_API_KEY=your_getgather_api_key_here
 
 # MaxMind GeoIP Configuration (optional)
 MAXMIND_ACCOUNT_ID=your_maxmind_account_id
@@ -62,7 +61,6 @@ Use Docker or Podman to pull the container image and run it:
 ```bash
 docker run -p 3000:3000 \
   -e GETGATHER_URL=your_local_mcp_getgather_url \
-  -e GETGATHER_API_KEY=your_api_key \
   -e GEMINI_API_KEY=your_gemini_key \
   ghcr.io/mcp-getgather/data-portrait:latest
 ```
