@@ -1,18 +1,26 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import {
+  type CallToolResult,
+  type CompatibilityCallToolResult,
+} from '@modelcontextprotocol/sdk/types.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { settings } from './config.js';
 
 class MCPClient {
-  client: Client;
+  private client: Client;
   lastAccessed: Date;
 
   constructor() {
-    this.client = new Client({ name: 'data-portrait', version: '1.0.0' });
+    this.client = this.createClient();
     this.lastAccessed = new Date();
   }
 
-  async connect(): Promise<void> {
-    const transport = new StreamableHTTPClientTransport(
+  private createClient(): Client {
+    return new Client({ name: 'data-portrait', version: '1.0.0' });
+  }
+
+  private createTransport(): StreamableHTTPClientTransport {
+    return new StreamableHTTPClientTransport(
       new URL(`${settings.GETGATHER_URL}/mcp`),
       {
         requestInit: {
@@ -22,7 +30,50 @@ class MCPClient {
         },
       }
     );
-    await this.client.connect(transport);
+  }
+
+  async connect(): Promise<void> {
+    await this.client.connect(this.createTransport());
+  }
+
+  async callTool(
+    params: {
+      name: string;
+      arguments?: {};
+    },
+    maxRetries: number = 3
+  ): Promise<CallToolResult | CompatibilityCallToolResult> {
+    this.lastAccessed = new Date();
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await this.client.callTool(params);
+      } catch (err) {
+        if (attempt === maxRetries) {
+          throw err;
+        }
+        console.warn(
+          `callTool failed (attempt ${attempt + 1}/${maxRetries + 1}), attempting MCP client reconnect...`,
+          err
+        );
+        await this.reconnect();
+      }
+    }
+
+    throw new Error('callTool failed after maximum retries');
+  }
+
+  async reconnect(): Promise<void> {
+    this.lastAccessed = new Date();
+
+    try {
+      if (this.client) {
+        await this.client.close?.().catch(() => {});
+      }
+    } finally {
+      this.client = this.createClient();
+      await this.connect();
+    }
   }
 
   close(): void {
@@ -43,7 +94,7 @@ class MCPClientManager {
   }
 
   private cleanupExpiredClients(): void {
-    for (const [sessionId, mcpClient] of this.clients.entries()) {
+    for (const [sessionId, mcpClient] of Array.from(this.clients.entries())) {
       if (mcpClient.isExpired) {
         mcpClient.close();
         this.clients.delete(sessionId);
@@ -59,7 +110,7 @@ class MCPClientManager {
     this.clients.set(sessionId, client);
   }
 
-  async get(sessionId: string): Promise<Client> {
+  async get(sessionId: string): Promise<MCPClient> {
     if (!this.has(sessionId)) {
       const mcpClient = new MCPClient();
       await mcpClient.connect();
@@ -69,7 +120,7 @@ class MCPClientManager {
     const mcpClient = this.clients.get(sessionId)!;
     mcpClient.lastAccessed = new Date();
 
-    return mcpClient.client;
+    return mcpClient;
   }
 }
 
