@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { mcpClientManager } from '../mcp-client.js';
+import { settings } from '../config.js';
 
 const tools: Record<string, string> = {
   amazon: 'amazon_get_purchase_history',
@@ -54,9 +55,18 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
 
   const mcpResponse = McpResponse.parse(result.structuredContent);
 
+  // replace get gatgather hosted-link with our own
+  let hosted_link_url = '';
+  if (mcpResponse.url) {
+    hosted_link_url = mcpResponse.url.replace(
+      settings.GETGATHER_URL,
+      settings.APP_HOST
+    );
+  }
+
   const response: PurchaseHistoryResponse = {
     link_id: mcpResponse.link_id || '',
-    hosted_link_url: mcpResponse.url || '',
+    hosted_link_url: hosted_link_url,
     content: [],
   };
 
