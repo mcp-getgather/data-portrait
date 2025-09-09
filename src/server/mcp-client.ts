@@ -8,11 +8,13 @@ import { settings } from './config.js';
 
 class MCPClient {
   private client: Client;
-  lastAccessed: Date;
+  private lastAccessed: Date;
+  private sessionID: string;
 
-  constructor() {
+  constructor(sessionID: string) {
     this.client = this.createClient();
     this.lastAccessed = new Date();
+    this.sessionID = sessionID;
   }
 
   private createClient(): Client {
@@ -47,6 +49,9 @@ class MCPClient {
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
+        console.log(
+          `Calling tool: ${params.name} with sessionId: ${this.sessionID}`
+        );
         return await this.client.callTool(params);
       } catch (err) {
         if (attempt === maxRetries) {
@@ -112,15 +117,12 @@ class MCPClientManager {
 
   async get(sessionId: string): Promise<MCPClient> {
     if (!this.has(sessionId)) {
-      const mcpClient = new MCPClient();
+      const mcpClient = new MCPClient(sessionId);
       await mcpClient.connect();
       this.set(sessionId, mcpClient);
     }
 
-    const mcpClient = this.clients.get(sessionId)!;
-    mcpClient.lastAccessed = new Date();
-
-    return mcpClient;
+    return this.clients.get(sessionId)!;
   }
 }
 
