@@ -27,18 +27,20 @@ const McpResponse = z.object({
         content: z.union([
           // wayfair response unparsed string
           z.string(),
-          // amazon, officedepot, goo is parsed
+          // amazon, officedepot is parsed
           z.array(z.record(z.unknown())),
         ]),
       })
     )
     .optional(),
+  // goodreads response
+  books: z.array(z.record(z.unknown())).optional(),
 });
 
 type PurchaseHistoryResponse = {
   link_id: string;
   hosted_link_url: string;
-  content: Array<any> | Record<string, any>;
+  content: Array<unknown> | Record<string, unknown>;
 };
 
 export const handlePurchaseHistory = async (req: Request, res: Response) => {
@@ -71,17 +73,18 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
   };
 
   // didn't have any content
-  if (!mcpResponse.extract_result?.[0]?.content) {
+  if (!mcpResponse.extract_result?.[0]?.content && !mcpResponse.books?.length) {
     res.json(response);
     return;
   }
 
-  const rawContent = mcpResponse.extract_result[0].content;
+  const rawContent =
+    mcpResponse.extract_result?.[0]?.content || mcpResponse.books;
 
   if (typeof rawContent === 'string') {
     response.content = JSON.parse(rawContent);
   } else {
-    response.content = rawContent;
+    response.content = rawContent || [];
   }
 
   res.json(response);
@@ -91,7 +94,7 @@ export const handleMcpPoll = async (req: Request, res: Response) => {
   const { linkId } = req.params;
   const mcpClient = await mcpClientManager.get(req.sessionID);
   const result = await mcpClient.callTool({
-    name: 'poll_auth',
+    name: 'poll_signin',
     arguments: { link_id: linkId },
   });
 
