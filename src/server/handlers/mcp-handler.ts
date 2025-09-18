@@ -27,7 +27,7 @@ const McpResponse = z.object({
         content: z.union([
           // wayfair response unparsed string
           z.string(),
-          // amazon, officedepot is parsed
+          // officedepot is parsed
           z.array(z.record(z.unknown())),
         ]),
       })
@@ -35,6 +35,8 @@ const McpResponse = z.object({
     .optional(),
   // goodreads response
   books: z.array(z.record(z.unknown())).optional(),
+  // amazon response
+  purchases: z.array(z.record(z.unknown())).optional(),
 });
 
 type PurchaseHistoryResponse = {
@@ -73,13 +75,19 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
   };
 
   // didn't have any content
-  if (!mcpResponse.extract_result?.[0]?.content && !mcpResponse.books?.length) {
+  if (
+    !mcpResponse.extract_result?.[0]?.content &&
+    !mcpResponse.books?.length &&
+    !mcpResponse.purchases?.length
+  ) {
     res.json(response);
     return;
   }
 
   const rawContent =
-    mcpResponse.extract_result?.[0]?.content || mcpResponse.books;
+    mcpResponse.extract_result?.[0]?.content ||
+    mcpResponse.books ||
+    mcpResponse.purchases;
 
   if (typeof rawContent === 'string') {
     response.content = JSON.parse(rawContent);
