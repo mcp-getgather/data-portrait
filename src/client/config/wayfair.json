@@ -12,32 +12,30 @@
       },
       {
         "outputKey": "order_id",
-        "sourcePath": "order.orderId",
+        "sourcePath": "order_id",
         "defaultValue": "N/A"
       },
       {
         "outputKey": "order_date",
-        "sourcePath": "order.placedAt.displayDate",
+        "sourcePath": "order_date",
         "defaultValue": "N/A",
         "transform": "date"
       },
       {
         "outputKey": "order_total",
-        "sourcePath": "order.financials.currentTotal",
+        "sourcePath": "total_price",
         "transform": "currency",
         "formatTemplate": "{symbol}{amount}",
         "defaultValue": "$0.00"
       },
       {
-        "outputKey": "product_names",
-        "sourcePath": "product.productName",
-        "transform": "array",
+        "outputKey": "product_name",
+        "sourcePath": "product_name",
         "defaultValue": "Unknown Product"
       },
       {
-        "outputKey": "image_urls",
-        "sourcePath": "product.imageUrl",
-        "transform": "array",
+        "outputKey": "image_url",
+        "sourcePath": "image_url",
         "defaultValue": ""
       }
     ]
