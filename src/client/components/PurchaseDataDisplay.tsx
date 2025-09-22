@@ -143,7 +143,10 @@ export function PurchaseDataDisplay({
                                   <span>🛍️ {order.brand}</span>
                                   {!!order.order_date && (
                                     <span>
-                                      📅 {order.order_date.toLocaleDateString()}
+                                      📅{' '}
+                                      {typeof order.order_date === 'string'
+                                        ? order.order_date
+                                        : order.order_date.toLocaleDateString()}
                                     </span>
                                   )}
                                 </div>
