@@ -75,14 +75,15 @@ const getPurchaseHistory = async (brandConfig: BrandConfig) => {
       brand: brandConfig.brand_name,
       order_date: (item.order_date as Date) || null,
       order_total: item.order_total as string,
-      order_id: item.order_id as string,
+      order_id: (item.order_id ?? item.order_number) as string,
       product_names: item.product_names as string[],
       image_urls: item.image_urls as string[],
     }));
 
-    // Get detailed data for wayfair brand only for now
+    // Get detailed data for wayfair and office depot brands
     if (
       brandConfig.brand_name.toLowerCase() === 'wayfair' &&
+      brandConfig.brand_name.toLowerCase() === 'office depot' &&
       purchaseHistory.length > 0
     ) {
       for (let i = 0; i < purchaseHistory.length; i++) {

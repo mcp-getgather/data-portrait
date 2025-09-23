@@ -6,7 +6,10 @@ import { geolocationService } from '../services/geolocation-service.js';
 
 const tools: Record<string, string[]> = {
   amazon: ['amazon_get_purchase_history'],
-  officedepot: ['officedepot_get_order_history'],
+  officedepot: [
+    'officedepot_get_order_history',
+    'officedepot_get_order_history_details',
+  ],
   wayfair: ['wayfair_get_order_history', 'wayfair_get_order_history_details'],
   goodreads: ['goodreads_get_book_list'],
 };
@@ -25,8 +28,7 @@ const McpResponse = z.object({
         name: z.string(),
         parsed: z.boolean(),
         parse_schema: z.record(z.unknown()).nullable(),
-        // officedepot is parsed
-        content: z.array(z.record(z.unknown())),
+        content: z.string(),
       })
     )
     .optional(),
@@ -34,7 +36,7 @@ const McpResponse = z.object({
   books: z.array(z.record(z.unknown())).optional(),
   // amazon response
   purchases: z.array(z.record(z.unknown())).optional(),
-  // wayfair response
+  // wayfair and officedepot response
   purchase_history: z.array(z.record(z.unknown())).optional(),
   purchase_history_details: z.array(z.record(z.unknown())).optional(),
 });

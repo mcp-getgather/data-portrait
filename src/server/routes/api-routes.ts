@@ -11,7 +11,7 @@ const router = Router();
 // Get purchase history
 router.get('/purchase-history/:brandName', handlePurchaseHistory);
 
-// Get purchase history details (only wayfair for now)
+// Get purchase history details (wayfair and officedepot)
 router.get(
   '/purchase-history-details/:brandName/:orderId',
   handlePurchaseHistoryDetails
