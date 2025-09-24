@@ -61,8 +61,8 @@ const pollForAuthCompletion = async (linkId: string) => {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
-  // Auth completed
   const data = await response.json();
+
   if (data.auth_completed) {
     return true;
   }
@@ -106,7 +106,16 @@ export function DataSource({
       );
 
       // Wait until auth successful
-      await pollForAuthCompletion(result.linkId);
+      while (true) {
+        try {
+          const authCompleted = await pollForAuthCompletion(result.linkId);
+          if (authCompleted) {
+            break;
+          }
+        } catch (error) {
+          console.error('Failed to poll for auth completion:', error);
+        }
+      }
 
       // Fetch purchase history after authentication
       const updatedResult = await getPurchaseHistory(brandConfig);

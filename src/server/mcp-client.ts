@@ -41,7 +41,7 @@ class MCPClient {
   async callTool(
     params: {
       name: string;
-      arguments?: {};
+      arguments?: Record<string, unknown>;
     },
     maxRetries: number = 3
   ): Promise<CallToolResult | CompatibilityCallToolResult> {
@@ -52,7 +52,10 @@ class MCPClient {
         console.log(
           `Calling tool: ${params.name} with sessionId: ${this.sessionID}`
         );
-        return await this.client.callTool(params);
+        return await this.client.callTool(params, undefined, {
+          timeout: 6000000,
+          maxTotalTimeout: 6000000,
+        });
       } catch (err) {
         if (attempt === maxRetries) {
           throw err;
