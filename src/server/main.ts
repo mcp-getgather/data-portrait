@@ -12,6 +12,7 @@ import { geolocationService } from './services/geolocation-service.js';
 import { imageService } from './services/image-service.js';
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
 import session from 'express-session';
+import bodyParser from 'body-parser';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -50,24 +51,7 @@ const createProxy = (path: string) =>
     target: `${settings.GETGATHER_URL}${path}`,
     changeOrigin: true,
     on: {
-      proxyReq: async (proxyReq, req) => {
-        if (req.method == 'POST') {
-          if (!req.body) {
-            req.body = {};
-          }
-          const clientIp = geolocationService.getClientIp(req);
-          const requestLocationData =
-            geolocationService.getClientLocationFromCache(clientIp);
-          req.body.location = requestLocationData;
-          proxyReq.setHeader(
-            'Content-Length',
-            Buffer.byteLength(JSON.stringify(req.body))
-          );
-          proxyReq.write(JSON.stringify(req.body));
-        } else {
-          fixRequestBody(proxyReq, req);
-        }
-      },
+      proxyReq: fixRequestBody,
       error: (
         err: Error,
         req: express.Request,
@@ -87,11 +71,27 @@ const proxyPaths = [
   '/__static',
   '/__static/assets',
   '/__static/assets/logos',
-  '/api',
 ];
 
 proxyPaths.forEach((path) => {
   app.use(path, createProxy(path));
+});
+app.use('/api', async (req, res, next) => {
+  bodyParser.json()(req, res, (err) => {
+    if (err) return next(err);
+
+    if (req.method === 'POST') {
+      if (!req.body) {
+        req.body = {};
+      }
+      const clientIp = geolocationService.getClientIp(req);
+      const requestLocationData =
+        geolocationService.getClientLocationFromCache(clientIp);
+      req.body.location = requestLocationData;
+    }
+
+    createProxy('/api')(req, res, next);
+  });
 });
 
 // Body parsing middleware
