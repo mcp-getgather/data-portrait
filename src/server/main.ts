@@ -50,7 +50,24 @@ const createProxy = (path: string) =>
     target: `${settings.GETGATHER_URL}${path}`,
     changeOrigin: true,
     on: {
-      proxyReq: fixRequestBody,
+      proxyReq: async (proxyReq, req) => {
+        if (req.method == 'POST' && req.url.includes('api')) {
+          if (!req.body) {
+            req.body = {};
+          }
+          const clientIp = geolocationService.getClientIp(req);
+          const requestLocationData =
+            geolocationService.getClientLocationFromCache(clientIp);
+          req.body.location = requestLocationData;
+          proxyReq.setHeader(
+            'Content-Length',
+            Buffer.byteLength(JSON.stringify(req.body))
+          );
+          proxyReq.write(JSON.stringify(req.body));
+        } else {
+          fixRequestBody(proxyReq, req);
+        }
+      },
       error: (
         err: Error,
         req: express.Request,
@@ -64,7 +81,14 @@ const createProxy = (path: string) =>
     },
   });
 
-const proxyPaths = ['/link', '/__assets', '/__static/assets', '/api'];
+const proxyPaths = [
+  '/link',
+  '/__assets',
+  '/__static',
+  '/__static/assets',
+  '/__static/assets/logos',
+  '/api',
+];
 
 proxyPaths.forEach((path) => {
   app.use(path, createProxy(path));

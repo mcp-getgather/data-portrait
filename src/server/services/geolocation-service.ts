@@ -2,6 +2,7 @@ import { Request } from 'express';
 import { Cache } from '../utils/cache.js';
 import { City, WebServiceClient } from '@maxmind/geoip2-node';
 import { settings } from '../config.js';
+import { LocationData } from '../middleware/geolocation-middleware.js';
 
 class GeolocationService {
   private ipCache: Cache;
@@ -17,6 +18,42 @@ class GeolocationService {
     }
 
     return request.ip || request.connection.remoteAddress || 'unknown';
+  }
+
+  getClientLocationFromCache(ipAddress: string) {
+    const cachedLocationData = this.ipCache.get(ipAddress);
+    if (!cachedLocationData) {
+      return null;
+    }
+    console.log(
+      '[getClientLocation] cached response for ip address: ',
+      ipAddress
+    );
+
+    let requestLocationData: LocationData = {
+      ip: ipAddress,
+      city: null,
+      state: null,
+      country: null,
+      postal_code: null,
+    };
+    if (cachedLocationData) {
+      requestLocationData = {
+        ...requestLocationData,
+        city: cachedLocationData?.city?.names.en ?? null,
+        state:
+          cachedLocationData?.subdivisions?.[
+            cachedLocationData.subdivisions.length - 1
+          ]?.names.en ?? null,
+        country: cachedLocationData?.country?.isoCode ?? null,
+        postal_code: cachedLocationData?.postal?.code ?? null,
+      };
+
+      console.log(
+        `🔍 Client Location: city: ${requestLocationData.city}, country: ${requestLocationData.country}, state: ${requestLocationData.state}, postal_code: ${requestLocationData.postal_code}`
+      );
+    }
+    return requestLocationData;
   }
 
   async getClientLocation(ipAddress: string): Promise<City | null> {
