@@ -51,7 +51,7 @@ const createProxy = (path: string) =>
     changeOrigin: true,
     on: {
       proxyReq: async (proxyReq, req) => {
-        if (req.method == 'POST' && req.url.includes('api')) {
+        if (req.method == 'POST') {
           if (!req.body) {
             req.body = {};
           }
