@@ -1,14 +1,13 @@
 import { Request } from 'express';
-import { Cache } from '../utils/cache.js';
 import { City, WebServiceClient } from '@maxmind/geoip2-node';
 import { settings } from '../config.js';
 import { LocationData } from '../middleware/geolocation-middleware.js';
 
 class GeolocationService {
-  private ipCache: Cache;
+  private ipCache: Map<string, City>;
 
   constructor() {
-    this.ipCache = new Cache(5);
+    this.ipCache = new Map();
   }
 
   getClientIp(request: Request): string {
@@ -22,13 +21,14 @@ class GeolocationService {
 
   getClientLocationFromCache(ipAddress: string) {
     const cachedLocationData = this.ipCache.get(ipAddress);
+    console.log(
+      '[getClientLocationFromCache] cached location data for ip address: ',
+      ipAddress,
+      cachedLocationData
+    );
     if (!cachedLocationData) {
       return null;
     }
-    console.log(
-      '[getClientLocation] cached response for ip address: ',
-      ipAddress
-    );
 
     let requestLocationData: LocationData = {
       ip: ipAddress,
