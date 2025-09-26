@@ -5,16 +5,19 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { settings } from './config.js';
+import { geolocationService } from './services/geolocation-service.js';
 
 class MCPClient {
   private client: Client;
   private lastAccessed: Date;
   private sessionID: string;
+  private clientIp: string;
 
-  constructor(sessionID: string) {
+  constructor(sessionID: string, clientIp: string) {
     this.client = this.createClient();
     this.lastAccessed = new Date();
     this.sessionID = sessionID;
+    this.clientIp = clientIp;
   }
 
   private createClient(): Client {
@@ -22,12 +25,16 @@ class MCPClient {
   }
 
   private createTransport(): StreamableHTTPClientTransport {
+    const locationData = geolocationService.getClientLocationFromCache(
+      this.clientIp
+    );
     return new StreamableHTTPClientTransport(
       new URL(`${settings.GETGATHER_URL}/mcp`),
       {
         requestInit: {
           headers: {
             'x-getgather-custom-app': 'data-portrait',
+            'x-location': locationData ? JSON.stringify(locationData) : '',
           },
         },
       }
@@ -118,9 +125,9 @@ class MCPClientManager {
     this.clients.set(sessionId, client);
   }
 
-  async get(sessionId: string): Promise<MCPClient> {
+  async get(sessionId: string, clientIp: string): Promise<MCPClient> {
     if (!this.has(sessionId)) {
-      const mcpClient = new MCPClient(sessionId);
+      const mcpClient = new MCPClient(sessionId, clientIp);
       await mcpClient.connect();
       this.set(sessionId, mcpClient);
     }

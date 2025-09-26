@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import { mcpClientManager } from '../mcp-client.js';
 import { settings } from '../config.js';
+import { geolocationService } from '../services/geolocation-service.js';
 
 const tools: Record<string, string> = {
   amazon: 'amazon_get_purchase_history',
@@ -54,7 +55,8 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
     return;
   }
 
-  const mcpClient = await mcpClientManager.get(req.sessionID);
+  const clientIp = geolocationService.getClientIp(req);
+  const mcpClient = await mcpClientManager.get(req.sessionID, clientIp);
   const result = await mcpClient.callTool({ name: toolName });
 
   const mcpResponse = McpResponse.parse(result.structuredContent);
@@ -100,7 +102,8 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
 
 export const handleMcpPoll = async (req: Request, res: Response) => {
   const { linkId } = req.params;
-  const mcpClient = await mcpClientManager.get(req.sessionID);
+  const clientIp = geolocationService.getClientIp(req);
+  const mcpClient = await mcpClientManager.get(req.sessionID, clientIp);
   const result = await mcpClient.callTool({
     name: 'poll_signin',
     arguments: { link_id: linkId },

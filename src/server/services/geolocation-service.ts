@@ -1,8 +1,13 @@
 import { Request } from 'express';
 import { City, WebServiceClient } from '@maxmind/geoip2-node';
 import { settings } from '../config.js';
-import { LocationData } from '../middleware/geolocation-middleware.js';
-
+export interface LocationData {
+  ip: string;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  postal_code?: string | null;
+}
 class GeolocationService {
   private ipCache: Map<string, City>;
 
