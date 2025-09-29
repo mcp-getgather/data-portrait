@@ -3,12 +3,19 @@ import { handlePortraitGeneration } from '../handlers/portrait-handler.js';
 import {
   handlePurchaseHistory,
   handleMcpPoll,
+  handlePurchaseHistoryDetails,
 } from '../handlers/mcp-handler.js';
 
 const router = Router();
 
 // Get purchase history
 router.get('/purchase-history/:brandName', handlePurchaseHistory);
+
+// Get purchase history details (only wayfair for now)
+router.get(
+  '/purchase-history-details/:brandName/:orderId',
+  handlePurchaseHistoryDetails
+);
 
 // MCP poll endpoint
 router.get('/mcp-poll/:linkId', handleMcpPoll);
