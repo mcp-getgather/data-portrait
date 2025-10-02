@@ -67,7 +67,7 @@ const pollForAuthCompletion = async (linkId: string) => {
     return true;
   }
 
-  throw new Error('Authentication failed or timed out');
+  throw new Error('Sign in failed or timed out');
 };
 
 export function DataSource({
@@ -76,10 +76,10 @@ export function DataSource({
   brandConfig,
   isConnected,
 }: DataSourceProps) {
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
 
   const handleConnect = async () => {
-    setIsLoading(true);
+    setLoadingMessage('Connecting...');
     try {
       const result = await getPurchaseHistory(brandConfig);
 
@@ -98,6 +98,7 @@ export function DataSource({
         return;
       }
 
+      setLoadingMessage('Signing in...');
       // Open hosted link in pop up window for authentication
       window.open(
         result.hostedLinkURL,
@@ -117,13 +118,14 @@ export function DataSource({
         }
       }
 
+      setLoadingMessage('Loading...');
       // Fetch purchase history after authentication
       const updatedResult = await getPurchaseHistory(brandConfig);
       onSuccessConnect(updatedResult.purchaseHistory);
     } catch (error) {
       console.error('Failed to create hosted link:', error);
     } finally {
-      setIsLoading(false);
+      setLoadingMessage(null);
     }
   };
 
@@ -157,10 +159,10 @@ export function DataSource({
             <Badge variant="secondary" className="text-xs px-2 py-1">
               Connected
             </Badge>
-          ) : isLoading ? (
+          ) : loadingMessage ? (
             <div className="flex items-center gap-1 text-xs text-gray-600 px-2 py-1">
               <Loader2 className="w-3 h-3 animate-spin" />
-              Connecting...
+              {loadingMessage}
             </div>
           ) : (
             <Button
