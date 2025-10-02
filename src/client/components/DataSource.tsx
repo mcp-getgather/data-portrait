@@ -67,7 +67,7 @@ const pollForAuthCompletion = async (linkId: string) => {
     return true;
   }
 
-  throw new Error('Authentication failed or timed out');
+  throw new Error('Sign in failed or timed out');
 };
 
 export function DataSource({
@@ -98,7 +98,7 @@ export function DataSource({
         return;
       }
 
-      setLoadingMessage('Authenticating...');
+      setLoadingMessage('Signing in...');
       // Open hosted link in pop up window for authentication
       window.open(
         result.hostedLinkURL,
