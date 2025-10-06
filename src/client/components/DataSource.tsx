@@ -424,7 +424,7 @@ export function DataSource({
           {/* Loading indicator */}
           {connectionStep !== 'initial' && (
             <div
-              className={`absolute inset-0 ${connectionStep !== 'completed' ? 'bg-gray-200/95' : 'bg-green-200/95'} rounded-lg flex flex-col items-center justify-center z-10`}
+              className={`absolute inset-0 ${connectionStep !== 'completed' ? 'bg-gray-200/95' : 'bg-green-200/95'} rounded-lg flex flex-col items-center justify-center z-10 transition-colors duration-300`}
             >
               {connectionStep !== 'completed'
                 ? renderStepIndicators()
