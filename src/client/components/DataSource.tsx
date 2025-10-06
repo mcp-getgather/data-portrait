@@ -205,7 +205,6 @@ export function DataSource({
   isConnected,
 }: DataSourceProps) {
   const { trackEvent } = useAnalytics();
-  const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
   const [connectionStep, setConnectionStep] =
     useState<ConnectionStep>('initial');
 
@@ -240,7 +239,6 @@ export function DataSource({
       }
 
       setConnectionStep('authenticating');
-      setLoadingMessage('Signing in');
 
       // Open hosted link in pop up window for authentication
       window.open(
@@ -277,7 +275,6 @@ export function DataSource({
       }
 
       setConnectionStep('retrieving');
-      setLoadingMessage('Retrieving');
 
       // Fetch purchase history after authentication
       if (!brandConfig.is_dpage) {
@@ -296,7 +293,6 @@ export function DataSource({
     } finally {
       // Wait a moment to show the success animation
       setTimeout(() => {
-        setLoadingMessage(null);
         setConnectionStep('initial');
       }, 1.5 * 1000);
     }
@@ -321,37 +317,39 @@ export function DataSource({
       },
     ];
 
-    return (
-      <div className="flex space-x-1 mt-1">
-        {steps.map((step, index) => {
-          const isActive = connectionStep === step.key;
-          const isCompleted =
-            connectionStep === 'completed' ||
-            (connectionStep !== 'initial' &&
-              !isActive &&
-              ['connecting', 'authenticating', 'retrieving'].indexOf(
-                connectionStep
-              ) > index);
+    const currentStep = steps.find((step) => step.key === connectionStep);
 
-          return isActive ? (
-            <span key={step.key} className="relative flex size-2">
-              <span
-                className={`absolute inline-flex h-full w-full animate-ping rounded-full ${step.color} opacity-75`}
-              ></span>
-              <span
-                className={`relative inline-flex size-2 rounded-full ${step.color}`}
-              ></span>
-            </span>
-          ) : (
-            <div
-              key={step.key}
-              className={`w-2 h-2 rounded-full transition-all duration-300 shadow-2xs ${
-                isCompleted ? step.color : 'bg-gray-300'
-              }`}
-            />
-          );
-        })}
-      </div>
+    return (
+      <>
+        <div className="flex flex-col items-center gap-1 text-xs text-gray-700 font-medium mb-1">
+          <Loader2 className="w-3 h-3 animate-spin" />
+          {currentStep?.label}
+        </div>
+        <div className="flex space-x-1 mt-1">
+          {steps.map((step) => {
+            const isActive = connectionStep === step.key;
+            const isCompleted = connectionStep === 'completed';
+
+            return isActive ? (
+              <span key={step.key} className="relative flex size-2">
+                <span
+                  className={`absolute inline-flex h-full w-full animate-ping rounded-full ${step.color} opacity-75`}
+                ></span>
+                <span
+                  className={`relative inline-flex size-2 rounded-full ${step.color}`}
+                ></span>
+              </span>
+            ) : (
+              <div
+                key={step.key}
+                className={`w-2 h-2 rounded-full transition-all duration-300 shadow-2xs ${
+                  isCompleted ? step.color : 'bg-gray-300'
+                }`}
+              />
+            );
+          })}
+        </div>
+      </>
     );
   };
 
@@ -424,21 +422,13 @@ export function DataSource({
           )}
 
           {/* Loading indicator */}
-          {loadingMessage && (
+          {connectionStep !== 'initial' && (
             <div
               className={`absolute inset-0 ${connectionStep !== 'completed' ? 'bg-gray-200/95' : 'bg-green-200/95'} rounded-lg flex flex-col items-center justify-center z-10`}
             >
-              {connectionStep !== 'completed' ? (
-                <>
-                  <div className="flex flex-col items-center gap-1 text-xs text-gray-700 font-medium mb-1">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    {loadingMessage}
-                  </div>
-                  {renderStepIndicators()}
-                </>
-              ) : (
-                renderSuccessAnimation()
-              )}
+              {connectionStep !== 'completed'
+                ? renderStepIndicators()
+                : renderSuccessAnimation()}
             </div>
           )}
         </div>
