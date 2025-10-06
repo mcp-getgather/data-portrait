@@ -14,6 +14,13 @@ interface DataSourceProps {
   isConnected?: boolean;
 }
 
+type ConnectionStep =
+  | 'initial'
+  | 'connecting'
+  | 'authenticating'
+  | 'retrieving'
+  | 'completed';
+
 const getPurchaseHistoryDetail = async (
   brandConfig: BrandConfig,
   orderId: string
@@ -199,13 +206,15 @@ export function DataSource({
 }: DataSourceProps) {
   const { trackEvent } = useAnalytics();
   const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
+  const [connectionStep, setConnectionStep] =
+    useState<ConnectionStep>('initial');
 
   const handleConnect = async () => {
     trackEvent('connection_attempt', {
       brand_name: brandConfig.brand_name,
     });
 
-    setLoadingMessage('Connecting...');
+    setConnectionStep('connecting');
     try {
       let result = null;
       if (brandConfig.is_dpage) {
@@ -225,11 +234,14 @@ export function DataSource({
 
       // If we already have purchase history, use it directly
       if (result.purchaseHistory && result.purchaseHistory.length > 0) {
+        setConnectionStep('completed');
         onSuccessConnect(result.purchaseHistory);
         return;
       }
 
-      setLoadingMessage('Signing in...');
+      setConnectionStep('authenticating');
+      setLoadingMessage('Signing in');
+
       // Open hosted link in pop up window for authentication
       window.open(
         result.hostedLinkURL,
@@ -264,11 +276,15 @@ export function DataSource({
         }
       }
 
-      setLoadingMessage('Loading...');
+      setConnectionStep('retrieving');
+      setLoadingMessage('Retrieving');
+
       // Fetch purchase history after authentication
       if (!brandConfig.is_dpage) {
         updatedResult = await getPurchaseHistory(brandConfig);
       }
+
+      setConnectionStep('completed');
       onSuccessConnect(updatedResult?.purchaseHistory || []);
     } catch (error) {
       trackEvent('connection_failed', {
@@ -276,14 +292,98 @@ export function DataSource({
         error: error instanceof Error ? error.message : 'Unknown error',
       });
       console.error('Failed to create hosted link:', error);
+      setConnectionStep('initial');
     } finally {
-      setLoadingMessage(null);
+      // Wait a moment to show the success animation
+      setTimeout(() => {
+        setLoadingMessage(null);
+        setConnectionStep('initial');
+      }, 1.5 * 1000);
     }
+  };
+
+  const renderStepIndicators = () => {
+    const steps = [
+      {
+        key: 'connecting',
+        label: 'Connecting',
+        color: 'bg-blue-500',
+      },
+      {
+        key: 'authenticating',
+        label: 'Signing in',
+        color: 'bg-yellow-500',
+      },
+      {
+        key: 'retrieving',
+        label: 'Retrieving',
+        color: 'bg-green-500',
+      },
+    ];
+
+    return (
+      <div className="flex space-x-1 mt-1">
+        {steps.map((step, index) => {
+          const isActive = connectionStep === step.key;
+          const isCompleted =
+            connectionStep === 'completed' ||
+            (connectionStep !== 'initial' &&
+              !isActive &&
+              ['connecting', 'authenticating', 'retrieving'].indexOf(
+                connectionStep
+              ) > index);
+
+          return isActive ? (
+            <span key={step.key} className="relative flex size-2">
+              <span
+                className={`absolute inline-flex h-full w-full animate-ping rounded-full ${step.color} opacity-75`}
+              ></span>
+              <span
+                className={`relative inline-flex size-2 rounded-full ${step.color}`}
+              ></span>
+            </span>
+          ) : (
+            <div
+              key={step.key}
+              className={`w-2 h-2 rounded-full transition-all duration-300 shadow-2xs ${
+                isCompleted ? step.color : 'bg-gray-300'
+              }`}
+            />
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderSuccessAnimation = () => {
+    if (connectionStep === 'completed') {
+      return (
+        <div className="mt-1 flex justify-center">
+          <div className="w-8 h-8">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="text-green-500 animate-bounce"
+            >
+              <path
+                fillRule="evenodd"
+                d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
     <>
-      <div className="flex flex-col items-center justify-between w-20 h-32 p-3 space-y-1">
+      <div
+        className={`flex flex-col items-center justify-between w-20 min-h-32 p-3 space-y-1 relative`}
+      >
         {/* Logo - Fixed size container */}
         <div className="w-12 h-12 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-100 flex-shrink-0">
           <img
@@ -311,11 +411,6 @@ export function DataSource({
             <Badge variant="secondary" className="text-xs px-2 py-1">
               Connected
             </Badge>
-          ) : loadingMessage ? (
-            <div className="flex items-center gap-1 text-xs text-gray-600 px-2 py-1">
-              <Loader2 className="w-3 h-3 animate-spin" />
-              {loadingMessage}
-            </div>
           ) : (
             <Button
               disabled={disabled}
@@ -326,6 +421,25 @@ export function DataSource({
             >
               Connect
             </Button>
+          )}
+
+          {/* Loading indicator */}
+          {loadingMessage && (
+            <div
+              className={`absolute inset-0 ${connectionStep !== 'completed' ? 'bg-gray-200/95' : 'bg-green-200/95'} rounded-lg flex flex-col items-center justify-center z-10`}
+            >
+              {connectionStep !== 'completed' ? (
+                <>
+                  <div className="flex flex-col items-center gap-1 text-xs text-gray-700 font-medium mb-1">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    {loadingMessage}
+                  </div>
+                  {renderStepIndicators()}
+                </>
+              ) : (
+                renderSuccessAnimation()
+              )}
+            </div>
           )}
         </div>
       </div>
