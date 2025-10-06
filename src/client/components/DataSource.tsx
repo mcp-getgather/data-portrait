@@ -326,9 +326,15 @@ export function DataSource({
           {currentStep?.label}
         </div>
         <div className="flex space-x-1 mt-1">
-          {steps.map((step) => {
+          {steps.map((step, index) => {
             const isActive = connectionStep === step.key;
-            const isCompleted = connectionStep === 'completed';
+            const isCompleted =
+              connectionStep === 'completed' ||
+              (connectionStep !== 'initial' &&
+                !isActive &&
+                ['connecting', 'authenticating', 'retrieving'].indexOf(
+                  connectionStep
+                ) > index);
 
             return isActive ? (
               <span key={step.key} className="relative flex size-2">
