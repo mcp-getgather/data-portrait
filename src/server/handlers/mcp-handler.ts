@@ -116,7 +116,8 @@ export const handlePurchaseHistoryDetails = async (
     return;
   }
 
-  const mcpClient = await mcpClientManager.get(req.sessionID);
+  const clientIp = geolocationService.getClientIp(req);
+  const mcpClient = await mcpClientManager.get(req.sessionID, clientIp);
   const result = await mcpClient.callTool({
     name: tools[brandName][1],
     arguments: { order_id: orderId },
