@@ -11,6 +11,11 @@
         "defaultValue": "Office Depot"
       },
       {
+        "outputKey": "order_id",
+        "sourcePath": "order_number",
+        "defaultValue": "N/A"
+      },
+      {
         "outputKey": "order_date",
         "sourcePath": "order_date",
         "defaultValue": "N/A",
@@ -23,19 +28,13 @@
         "defaultValue": "$0.00"
       },
       {
-        "outputKey": "order_id",
-        "sourcePath": "order_number",
-        "defaultValue": "N/A"
-      },
-      {
-        "outputKey": "product_names",
-        "sourcePath": "product_names",
+        "outputKey": "product_name",
+        "sourcePath": "product_name",
         "defaultValue": "Unknown Product"
       },
       {
-        "outputKey": "image_urls",
+        "outputKey": "image_url",
         "sourcePath": "image_url",
-        "transform": "image",
         "defaultValue": ""
       }
     ]
