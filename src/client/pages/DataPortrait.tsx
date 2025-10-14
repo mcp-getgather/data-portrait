@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
 import { EmptyState } from '../components/EmptyState.js';
@@ -15,6 +15,7 @@ import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 import type { ImageData } from '../components/GeneratedImagesGrid.js';
 import { filterUniqueOrders } from '../utils/index.js';
 import { log } from '../utils/log.js';
+import { useAnalytics } from '../hooks/useAnalytics.js';
 
 const amazonConfig = amazon as BrandConfig;
 const wayfairConfig = wayfair as BrandConfig;
@@ -57,6 +58,8 @@ const sampleOrders: PurchaseHistory[] = [
 ];
 
 export function DataPortrait() {
+  const { trackEvent } = useAnalytics();
+
   const [orders, setOrders] = useState<PurchaseHistory[]>([]);
   const [connectedBrands, setConnectedBrands] = useState<string[]>([]);
   const [selectedGender, setSelectedGender] = useState('Female');
@@ -71,12 +74,29 @@ export function DataPortrait() {
     string | null
   >(null);
 
+  // Track page view on component mount
+  useEffect(() => {
+    trackEvent('page_view', {
+      page: 'data_portrait',
+    });
+  }, [trackEvent]);
+
   const handleSuccessConnect = (brandName: string, data: PurchaseHistory[]) => {
     log({
       message: 'Received orders from client',
       data: { brandName, data },
       type: 'server',
     });
+
+    // Track successful brand connection
+    trackEvent('brand_connected_successful', {
+      brand_name: brandName,
+      orders_count: data.length,
+      connected_brands_count: connectedBrands.length,
+      connected_brands: connectedBrands,
+      data: data,
+    });
+
     setConnectedBrands((prev) => [...prev, brandName]);
     setOrders((prev) => {
       const combined = [...prev, ...data];
@@ -100,12 +120,24 @@ export function DataPortrait() {
   };
 
   const clearData = () => {
+    trackEvent('data_cleared', {
+      orders_count: orders.length,
+      connected_brands_count: connectedBrands.length,
+    });
     setOrders([]);
     setConnectedBrands([]);
     setExpandedOrders(new Set());
   };
 
   const generatePortrait = async () => {
+    trackEvent('portrait_generation_started', {
+      orders_count: orders.length,
+      connected_brands: connectedBrands,
+      selected_gender: selectedGender,
+      selected_traits: selectedTraits,
+      selected_image_style: selectedImageStyle,
+    });
+
     setIsGenerating(true);
 
     try {
@@ -145,6 +177,13 @@ export function DataPortrait() {
           ...prev.slice(0, 11), // Keep only the latest 12 images
         ]);
 
+        trackEvent('portrait_generation_successful', {
+          model: data.model,
+          provider: data.provider,
+          image_style: selectedImageStyle,
+          orders_count: orders.length,
+        });
+
         // Close sidebar on mobile after successful generation
         if (window.innerWidth < 1024) {
           setIsSidebarOpen(false);
@@ -153,6 +192,11 @@ export function DataPortrait() {
         throw new Error(data.message || 'Failed to generate portrait');
       }
     } catch (error: unknown) {
+      trackEvent('portrait_generation_failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        orders_count: orders.length,
+        selected_image_style: selectedImageStyle,
+      });
       alert('Failed to generate portrait. Please try again.');
     } finally {
       setIsGenerating(false);

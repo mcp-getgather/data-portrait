@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useAnalytics } from '../hooks/useAnalytics.js';
 import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 import { transformData } from '../modules/DataTransformSchema.js';
@@ -137,9 +138,14 @@ export function DataSource({
   brandConfig,
   isConnected,
 }: DataSourceProps) {
+  const { trackEvent } = useAnalytics();
   const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
 
   const handleConnect = async () => {
+    trackEvent('connection_attempt', {
+      brand_name: brandConfig.brand_name,
+    });
+
     setLoadingMessage('Connecting...');
     try {
       const result = await getPurchaseHistory(brandConfig);
@@ -184,6 +190,10 @@ export function DataSource({
       const updatedResult = await getPurchaseHistory(brandConfig);
       onSuccessConnect(updatedResult.purchaseHistory);
     } catch (error) {
+      trackEvent('connection_failed', {
+        brand_name: brandConfig.brand_name,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       console.error('Failed to create hosted link:', error);
     } finally {
       setLoadingMessage(null);
