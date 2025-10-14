@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { mcpClientManager } from '../mcp-client.js';
 import { settings } from '../config.js';
 import { geolocationService } from '../services/geolocation-service.js';
+import { analytics } from '../services/analytics-service.js';
 
 const tools: Record<string, string[]> = {
   amazon: ['amazon_get_purchase_history'],
@@ -104,6 +105,21 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
     response.content = rawContent || [];
   }
 
+  // Track successful data retrieval
+  if (
+    response.content &&
+    Array.isArray(response.content) &&
+    response.content.length > 0
+  ) {
+    const clientIp = geolocationService.getClientIp(req);
+    analytics.track(req.sessionID, 'data_retrieved_successful', {
+      brand_name: brandName,
+      data_count: response.content.length,
+      purchase_history: response.content,
+      client_ip: clientIp,
+    });
+  }
+
   res.json(response);
 };
 
@@ -157,9 +173,18 @@ export const handleMcpPoll = async (req: Request, res: Response) => {
   });
 
   const response = result.structuredContent as { status?: string };
+  const authCompleted = response?.status === 'FINISHED';
+
+  // Track successful authentication
+  if (authCompleted) {
+    analytics.track(req.sessionID, 'connection_successful', {
+      link_id: linkId,
+      client_ip: clientIp,
+    });
+  }
 
   res.json({
-    auth_completed: response?.status === 'FINISHED',
+    auth_completed: authCompleted,
     link_id: linkId,
   });
 };

@@ -5,6 +5,7 @@ import {
   handleMcpPoll,
   handlePurchaseHistoryDetails,
 } from '../handlers/mcp-handler.js';
+import { handleAnalytics } from '../handlers/analytics-handler.js';
 
 const router = Router();
 
@@ -32,5 +33,7 @@ router.post('/log', (req, res) => {
   // Respond with 204 No Content to signal successful receipt without extra payload
   res.sendStatus(204);
 });
+
+router.post('/analytics', handleAnalytics);
 
 export { router as apiRoutes };

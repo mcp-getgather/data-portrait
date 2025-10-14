@@ -12,4 +12,7 @@ export const settings = {
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
   SENTRY_DSN: process.env.SENTRY_DSN || '',
   SESSION_SECRET: process.env.SESSION_SECRET || 'pleasereplacemeonprod',
+  SEGMENT_WRITE_KEY: process.env.SEGMENT_WRITE_KEY || '',
 } as const;
+
+console.log({ settings });
