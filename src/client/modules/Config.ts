@@ -6,6 +6,7 @@ export type BrandConfig = {
   brand_name: string;
   logo_url: string;
   is_mandatory: boolean;
+  is_dpage?: boolean;
   schema: Array<Schema>;
   dataTransform: DataTransformSchema;
 };

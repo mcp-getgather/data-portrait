@@ -29,12 +29,13 @@ class MCPClient {
       this.clientIp
     );
     return new StreamableHTTPClientTransport(
-      new URL(`${settings.GETGATHER_URL}/mcp`),
+      new URL(`${settings.GETGATHER_URL}/mcp-books`), // need to fix this
       {
         requestInit: {
           headers: {
             'x-getgather-custom-app': 'data-portrait',
             'x-location': locationData ? JSON.stringify(locationData) : '',
+            'x-incognito': '1',
           },
         },
       }

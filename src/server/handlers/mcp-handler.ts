@@ -188,3 +188,80 @@ export const handleMcpPoll = async (req: Request, res: Response) => {
     link_id: linkId,
   });
 };
+
+export const handleDpageUrl = async (req: Request, res: Response) => {
+  const { brandName } = req.params;
+
+  const toolName = tools[brandName][0];
+  if (!toolName) {
+    res.status(400).json({ error: 'Invalid brand name' });
+    return;
+  }
+
+  const clientIp = geolocationService.getClientIp(req);
+  const mcpClient = await mcpClientManager.get(req.sessionID, clientIp);
+  const result = await mcpClient.callTool({ name: toolName });
+
+  const mcpResponse = result.structuredContent as {
+    url: string;
+    signin_id: string;
+  };
+
+  const hosted_link_url = mcpResponse.url.replace(
+    settings.GETGATHER_URL,
+    settings.APP_HOST
+  );
+
+  const response: PurchaseHistoryResponse = {
+    link_id: mcpResponse.signin_id || '',
+    hosted_link_url,
+    content: [],
+  };
+  res.json(response);
+};
+
+export const handleDpageSigninCheck = async (req: Request, res: Response) => {
+  const { linkId } = req.params;
+  const clientIp = geolocationService.getClientIp(req);
+  const mcpClient = await mcpClientManager.get(req.sessionID, clientIp);
+  const result = await mcpClient.callTool({
+    name: 'check_signin',
+    arguments: { signin_id: linkId },
+  });
+
+  const response = result.structuredContent as {
+    status?: string;
+    result?: unknown;
+  };
+  const isAuthCompleted = response?.status === 'SUCCESS';
+
+  if (isAuthCompleted) {
+    analytics.track(req.sessionID, 'connection_successful', {
+      link_id: linkId,
+      client_ip: clientIp,
+    });
+  }
+
+  let content = null;
+
+  if (typeof response.result === 'string') {
+    content = JSON.parse(response.result);
+  } else {
+    content = response.result || [];
+  }
+
+  if (content && Array.isArray(content) && content.length > 0) {
+    const clientIp = geolocationService.getClientIp(req);
+    analytics.track(req.sessionID, 'data_retrieved_successful', {
+      data_count: content.length,
+      purchase_history: content,
+      client_ip: clientIp,
+    });
+  }
+
+  res.json({
+    auth_completed: isAuthCompleted,
+    link_id: linkId,
+    content,
+  });
+};

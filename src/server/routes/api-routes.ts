@@ -4,10 +4,17 @@ import {
   handlePurchaseHistory,
   handleMcpPoll,
   handlePurchaseHistoryDetails,
+  handleDpageUrl,
+  handleDpageSigninCheck,
 } from '../handlers/mcp-handler.js';
 import { handleAnalytics } from '../handlers/analytics-handler.js';
 
 const router = Router();
+
+// Get dpage url
+router.get('/dpage-url/:brandName', handleDpageUrl);
+
+router.get('/dpage-signin-check/:linkId', handleDpageSigninCheck);
 
 // Get purchase history
 router.get('/purchase-history/:brandName', handlePurchaseHistory);
