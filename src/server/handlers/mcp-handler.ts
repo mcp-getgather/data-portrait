@@ -173,10 +173,10 @@ export const handleMcpPoll = async (req: Request, res: Response) => {
   });
 
   const response = result.structuredContent as { status?: string };
-  const authCompleted = response?.status === 'FINISHED';
+  const isAuthCompleted = response?.status === 'FINISHED';
 
   // Track successful authentication
-  if (authCompleted) {
+  if (isAuthCompleted) {
     analytics.track(req.sessionID, 'connection_successful', {
       link_id: linkId,
       client_ip: clientIp,
@@ -184,7 +184,7 @@ export const handleMcpPoll = async (req: Request, res: Response) => {
   }
 
   res.json({
-    auth_completed: authCompleted,
+    auth_completed: isAuthCompleted,
     link_id: linkId,
   });
 };
