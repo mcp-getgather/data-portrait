@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useAnalytics } from '../hooks/useAnalytics.js';
 import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 import { transformData } from '../modules/DataTransformSchema.js';
@@ -12,6 +13,40 @@ interface DataSourceProps {
   brandConfig: BrandConfig;
   isConnected?: boolean;
 }
+
+const getPurchaseHistoryDetail = async (
+  brandConfig: BrandConfig,
+  orderId: string
+) => {
+  const response = await fetch(
+    `/getgather/purchase-history-details/${brandConfig.brand_id}/${orderId}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (data.content) {
+    const transformedData = transformData(
+      data.content,
+      brandConfig.dataTransform
+    );
+    return transformedData.map((item) => ({
+      product_name: item.product_name as string,
+      image_url: item.image_url as string,
+    }));
+  }
+
+  return [];
+};
 
 const getPurchaseHistory = async (brandConfig: BrandConfig) => {
   const response = await fetch(
@@ -41,10 +76,37 @@ const getPurchaseHistory = async (brandConfig: BrandConfig) => {
       brand: brandConfig.brand_name,
       order_date: (item.order_date as Date) || null,
       order_total: item.order_total as string,
-      order_id: item.order_id as string,
+      order_id: (item.order_id ?? item.order_number) as string,
       product_names: item.product_names as string[],
       image_urls: item.image_urls as string[],
     }));
+
+    // Get detailed data for wayfair and office depot brands
+    if (
+      brandConfig.brand_name.toLowerCase() === 'wayfair' &&
+      brandConfig.brand_name.toLowerCase() === 'office depot' &&
+      purchaseHistory.length > 0
+    ) {
+      for (let i = 0; i < purchaseHistory.length; i++) {
+        const order = purchaseHistory[i];
+        try {
+          const detailData = await getPurchaseHistoryDetail(
+            brandConfig,
+            order.order_id
+          );
+          purchaseHistory[i] = {
+            ...order,
+            product_names: detailData.map((item) => item.product_name),
+            image_urls: detailData.map((item) => item.image_url),
+          };
+        } catch (error) {
+          console.error(
+            `Failed to get details for order ${order.order_id}:`,
+            error
+          );
+        }
+      }
+    }
   }
 
   return {
@@ -83,10 +145,15 @@ export function DataSource({
   brandConfig,
   isConnected,
 }: DataSourceProps) {
+  const { trackEvent } = useAnalytics();
   const [connectionStep, setConnectionStep] =
     useState<ConnectionStep>('initial');
 
   const handleConnect = async () => {
+    trackEvent('connection_attempt', {
+      brand_name: brandConfig.brand_name,
+    });
+
     setConnectionStep('connecting');
     try {
       const result = await getPurchaseHistory(brandConfig);
@@ -136,6 +203,10 @@ export function DataSource({
       setConnectionStep('completed');
       onSuccessConnect(updatedResult.purchaseHistory);
     } catch (error) {
+      trackEvent('connection_failed', {
+        brand_name: brandConfig.brand_name,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       console.error('Failed to create hosted link:', error);
       setConnectionStep('initial');
     } finally {

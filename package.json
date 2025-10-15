@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
     "dev:client": "vite",
-    "dev:server": "nodemon -w src/server -x tsx src/server/main.ts",
+    "dev:server": "tsx watch src/server/main.ts",
     "start": "NODE_ENV=production node dist/server/main.js",
     "build": "npm run build:frontend && npm run build:backend",
     "build:frontend": "vite build",
@@ -24,6 +24,7 @@
     "@maxmind/geoip2-node": "^6.1.0",
     "@radix-ui/react-popover": "^1.1.14",
     "@radix-ui/react-slot": "^1.2.3",
+    "@segment/analytics-node": "^2.3.0",
     "@sentry/node": "^9.33.0",
     "@tailwindcss/vite": "^4.1.10",
     "class-variance-authority": "^0.7.1",

@@ -3,12 +3,20 @@ import { handlePortraitGeneration } from '../handlers/portrait-handler.js';
 import {
   handlePurchaseHistory,
   handleMcpPoll,
+  handlePurchaseHistoryDetails,
 } from '../handlers/mcp-handler.js';
+import { handleAnalytics } from '../handlers/analytics-handler.js';
 
 const router = Router();
 
 // Get purchase history
 router.get('/purchase-history/:brandName', handlePurchaseHistory);
+
+// Get purchase history details (wayfair and officedepot)
+router.get(
+  '/purchase-history-details/:brandName/:orderId',
+  handlePurchaseHistoryDetails
+);
 
 // MCP poll endpoint
 router.get('/mcp-poll/:linkId', handleMcpPoll);
@@ -25,5 +33,7 @@ router.post('/log', (req, res) => {
   // Respond with 204 No Content to signal successful receipt without extra payload
   res.sendStatus(204);
 });
+
+router.post('/analytics', handleAnalytics);
 
 export { router as apiRoutes };
