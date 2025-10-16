@@ -12,21 +12,21 @@ import { handleAnalytics } from '../handlers/analytics-handler.js';
 const router = Router();
 
 // Get dpage url
-router.get('/dpage-url/:brandName', handleDpageUrl);
+router.get('/dpage-url/:brandId', handleDpageUrl);
 
-router.get('/dpage-signin-check/:linkId', handleDpageSigninCheck);
+router.get('/dpage-signin-check/:brandId/:linkId', handleDpageSigninCheck);
 
 // Get purchase history
-router.get('/purchase-history/:brandName', handlePurchaseHistory);
+router.get('/purchase-history/:brandId', handlePurchaseHistory);
 
 // Get purchase history details (wayfair and officedepot)
 router.get(
-  '/purchase-history-details/:brandName/:orderId',
+  '/purchase-history-details/:brandId/:orderId',
   handlePurchaseHistoryDetails
 );
 
 // MCP poll endpoint
-router.get('/mcp-poll/:linkId', handleMcpPoll);
+router.get('/mcp-poll/:brandId/:linkId', handleMcpPoll);
 
 // Portrait generation endpoint
 router.post('/generate-portrait', handlePortraitGeneration);

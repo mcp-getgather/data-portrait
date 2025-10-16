@@ -53,16 +53,20 @@ type PurchaseHistoryDetailsResponse = {
 };
 
 export const handlePurchaseHistory = async (req: Request, res: Response) => {
-  const { brandName } = req.params;
+  const { brandId } = req.params;
 
-  const toolName = tools[brandName][0];
+  const toolName = tools[brandId][0];
   if (!toolName) {
     res.status(400).json({ error: 'Invalid brand name' });
     return;
   }
 
   const clientIp = geolocationService.getClientIp(req);
-  const mcpClient = await mcpClientManager.get(req.sessionID, clientIp);
+  const mcpClient = await mcpClientManager.get({
+    sessionId: req.sessionID,
+    clientIp,
+    brandId,
+  });
   const result = await mcpClient.callTool({ name: toolName });
 
   const mcpResponse = McpResponse.parse(result.structuredContent);
@@ -113,7 +117,7 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
   ) {
     const clientIp = geolocationService.getClientIp(req);
     analytics.track(req.sessionID, 'data_retrieved_successful', {
-      brand_name: brandName,
+      brand_name: brandId,
       data_count: response.content.length,
       purchase_history: response.content,
       client_ip: clientIp,
@@ -127,17 +131,21 @@ export const handlePurchaseHistoryDetails = async (
   req: Request,
   res: Response
 ) => {
-  const { brandName, orderId } = req.params;
-  const toolName = tools[brandName][1];
+  const { brandId, orderId } = req.params;
+  const toolName = tools[brandId][1];
   if (!toolName) {
     res.status(400).json({ error: 'Invalid brand name' });
     return;
   }
 
   const clientIp = geolocationService.getClientIp(req);
-  const mcpClient = await mcpClientManager.get(req.sessionID, clientIp);
+  const mcpClient = await mcpClientManager.get({
+    sessionId: req.sessionID,
+    clientIp,
+    brandId,
+  });
   const result = await mcpClient.callTool({
-    name: tools[brandName][1],
+    name: tools[brandId][1],
     arguments: { order_id: orderId },
   });
 
@@ -164,9 +172,13 @@ export const handlePurchaseHistoryDetails = async (
 };
 
 export const handleMcpPoll = async (req: Request, res: Response) => {
-  const { linkId } = req.params;
+  const { brandId, linkId } = req.params;
   const clientIp = geolocationService.getClientIp(req);
-  const mcpClient = await mcpClientManager.get(req.sessionID, clientIp);
+  const mcpClient = await mcpClientManager.get({
+    sessionId: req.sessionID,
+    clientIp,
+    brandId,
+  });
   const result = await mcpClient.callTool({
     name: 'poll_signin',
     arguments: { link_id: linkId },
@@ -190,16 +202,20 @@ export const handleMcpPoll = async (req: Request, res: Response) => {
 };
 
 export const handleDpageUrl = async (req: Request, res: Response) => {
-  const { brandName } = req.params;
+  const { brandId } = req.params;
 
-  const toolName = tools[brandName][0];
+  const toolName = tools[brandId][0];
   if (!toolName) {
     res.status(400).json({ error: 'Invalid brand name' });
     return;
   }
 
   const clientIp = geolocationService.getClientIp(req);
-  const mcpClient = await mcpClientManager.get(req.sessionID, clientIp);
+  const mcpClient = await mcpClientManager.get({
+    sessionId: req.sessionID,
+    clientIp,
+    brandId,
+  });
   const result = await mcpClient.callTool({ name: toolName });
 
   const mcpResponse = result.structuredContent as {
@@ -221,9 +237,13 @@ export const handleDpageUrl = async (req: Request, res: Response) => {
 };
 
 export const handleDpageSigninCheck = async (req: Request, res: Response) => {
-  const { linkId } = req.params;
+  const { brandId, linkId } = req.params;
   const clientIp = geolocationService.getClientIp(req);
-  const mcpClient = await mcpClientManager.get(req.sessionID, clientIp);
+  const mcpClient = await mcpClientManager.get({
+    sessionId: req.sessionID,
+    clientIp,
+    brandId,
+  });
   const result = await mcpClient.callTool({
     name: 'check_signin',
     arguments: { signin_id: linkId },

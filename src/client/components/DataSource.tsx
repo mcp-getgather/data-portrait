@@ -116,8 +116,13 @@ const getPurchaseHistory = async (brandConfig: BrandConfig) => {
   };
 };
 
-const pollForAuthCompletion = async (linkId: string) => {
-  const response = await fetch(`/getgather/mcp-poll/${linkId}`);
+const pollForAuthCompletion = async (
+  brandConfig: BrandConfig,
+  linkId: string
+) => {
+  const response = await fetch(
+    `/getgather/mcp-poll/${brandConfig.brand_id}/${linkId}`
+  );
 
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
@@ -157,7 +162,9 @@ const getDpageSigninCheck = async (
   brandConfig: BrandConfig,
   linkId: string
 ) => {
-  const response = await fetch(`/getgather/dpage-signin-check/${linkId}`);
+  const response = await fetch(
+    `/getgather/dpage-signin-check/${brandConfig.brand_id}/${linkId}`
+  );
 
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
@@ -244,7 +251,10 @@ export function DataSource({
               break;
             }
           } else {
-            const authCompleted = await pollForAuthCompletion(result.linkId);
+            const authCompleted = await pollForAuthCompletion(
+              brandConfig,
+              result.linkId
+            );
             if (authCompleted) {
               break;
             }
