@@ -116,8 +116,13 @@ const getPurchaseHistory = async (brandConfig: BrandConfig) => {
   };
 };
 
-const pollForAuthCompletion = async (linkId: string) => {
-  const response = await fetch(`/getgather/mcp-poll/${linkId}`);
+const pollForAuthCompletion = async (
+  brandConfig: BrandConfig,
+  linkId: string
+) => {
+  const response = await fetch(
+    `/getgather/mcp-poll/${brandConfig.brand_id}/${linkId}`
+  );
 
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
@@ -130,6 +135,60 @@ const pollForAuthCompletion = async (linkId: string) => {
   }
 
   throw new Error('Sign in failed or timed out');
+};
+
+const getDpageUrl = async (brandConfig: BrandConfig) => {
+  const response = await fetch(`/getgather/dpage-url/${brandConfig.brand_id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  return {
+    linkId: data.link_id,
+    hostedLinkURL: data.hosted_link_url,
+    purchaseHistory: [],
+  };
+};
+
+const getDpageSigninCheck = async (
+  brandConfig: BrandConfig,
+  linkId: string
+) => {
+  const response = await fetch(
+    `/getgather/dpage-signin-check/${brandConfig.brand_id}/${linkId}`
+  );
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (data.auth_completed) {
+    const transformedData = transformData(
+      data.content,
+      brandConfig.dataTransform
+    );
+    const result = transformedData.map((item) => ({
+      brand: brandConfig.brand_name,
+      order_date: (item.order_date as Date) || null,
+      order_total: item.order_total as string,
+      order_id: item.order_id as string,
+      product_names: item.product_names as string[],
+      image_urls: item.image_urls as string[],
+    }));
+    return result;
+  }
+
+  throw new Error('Authentication failed or timed out');
 };
 
 export function DataSource({
@@ -148,7 +207,12 @@ export function DataSource({
 
     setLoadingMessage('Connecting...');
     try {
-      const result = await getPurchaseHistory(brandConfig);
+      let result = null;
+      if (brandConfig.is_dpage) {
+        result = await getDpageUrl(brandConfig);
+      } else {
+        result = await getPurchaseHistory(brandConfig);
+      }
 
       // got nothing
       if (
@@ -174,11 +238,26 @@ export function DataSource({
       );
 
       // Wait until auth successful
+      let updatedResult = null;
       while (true) {
         try {
-          const authCompleted = await pollForAuthCompletion(result.linkId);
-          if (authCompleted) {
-            break;
+          if (brandConfig.is_dpage) {
+            const purchaseHistory = await getDpageSigninCheck(
+              brandConfig,
+              result.linkId
+            );
+            if (purchaseHistory) {
+              updatedResult = { purchaseHistory };
+              break;
+            }
+          } else {
+            const authCompleted = await pollForAuthCompletion(
+              brandConfig,
+              result.linkId
+            );
+            if (authCompleted) {
+              break;
+            }
           }
         } catch (error) {
           console.error('Failed to poll for auth completion:', error);
@@ -187,8 +266,10 @@ export function DataSource({
 
       setLoadingMessage('Loading...');
       // Fetch purchase history after authentication
-      const updatedResult = await getPurchaseHistory(brandConfig);
-      onSuccessConnect(updatedResult.purchaseHistory);
+      if (!brandConfig.is_dpage) {
+        updatedResult = await getPurchaseHistory(brandConfig);
+      }
+      onSuccessConnect(updatedResult?.purchaseHistory || []);
     } catch (error) {
       trackEvent('connection_failed', {
         brand_name: brandConfig.brand_name,

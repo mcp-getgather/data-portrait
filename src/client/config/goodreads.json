@@ -3,6 +3,7 @@
   "brand_name": "Goodreads",
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Goodreads_%27g%27_logo.svg",
   "is_mandatory": false,
+  "is_dpage": true,
   "schema": [
     {
       "name": "email",

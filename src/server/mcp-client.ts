@@ -7,17 +7,31 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { settings } from './config.js';
 import { geolocationService } from './services/geolocation-service.js';
 
+// Currently just define the MCP url path for each brand here for simplicity
+const MCP_URL_PATHS: Record<string, string> = {
+  goodreads: 'mcp-books',
+};
 class MCPClient {
   private client: Client;
   private lastAccessed: Date;
-  private sessionID: string;
+  private sessionId: string;
   private clientIp: string;
+  private brandId: string;
 
-  constructor(sessionID: string, clientIp: string) {
+  constructor({
+    sessionId,
+    clientIp,
+    brandId,
+  }: {
+    sessionId: string;
+    clientIp: string;
+    brandId: string;
+  }) {
     this.client = this.createClient();
     this.lastAccessed = new Date();
-    this.sessionID = sessionID;
+    this.sessionId = sessionId;
     this.clientIp = clientIp;
+    this.brandId = brandId;
   }
 
   private createClient(): Client {
@@ -28,13 +42,16 @@ class MCPClient {
     const locationData = geolocationService.getClientLocationFromCache(
       this.clientIp
     );
+
+    const mcpUrlPath = MCP_URL_PATHS[this.brandId] ?? 'mcp';
     return new StreamableHTTPClientTransport(
-      new URL(`${settings.GETGATHER_URL}/mcp`),
+      new URL(`${settings.GETGATHER_URL}/${mcpUrlPath}`),
       {
         requestInit: {
           headers: {
             'x-getgather-custom-app': 'data-portrait',
             'x-location': locationData ? JSON.stringify(locationData) : '',
+            'x-incognito': '1',
           },
         },
       }
@@ -57,7 +74,7 @@ class MCPClient {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         console.log(
-          `Calling tool: ${params.name} with sessionId: ${this.sessionID}`
+          `Calling tool: ${params.name} with sessionId: ${this.sessionId}`
         );
         return await this.client.callTool(params, undefined, {
           timeout: 6000000,
@@ -117,22 +134,23 @@ class MCPClientManager {
     }
   }
 
-  has(sessionId: string): boolean {
-    return this.clients.has(sessionId);
-  }
-
-  set(sessionId: string, client: MCPClient): void {
-    this.clients.set(sessionId, client);
-  }
-
-  async get(sessionId: string, clientIp: string): Promise<MCPClient> {
-    if (!this.has(sessionId)) {
-      const mcpClient = new MCPClient(sessionId, clientIp);
+  async get({
+    sessionId,
+    clientIp,
+    brandId,
+  }: {
+    sessionId: string;
+    clientIp: string;
+    brandId: string;
+  }): Promise<MCPClient> {
+    const key = `${sessionId}-${brandId}`;
+    if (!this.clients.has(key)) {
+      const mcpClient = new MCPClient({ sessionId, clientIp, brandId });
       await mcpClient.connect();
-      this.set(sessionId, mcpClient);
+      this.clients.set(key, mcpClient);
     }
 
-    return this.clients.get(sessionId)!;
+    return this.clients.get(key)!;
   }
 }
 

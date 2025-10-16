@@ -71,6 +71,7 @@ const proxyPaths = [
   '/__static',
   '/__static/assets',
   '/__static/assets/logos',
+  '/dpage',
 ];
 
 proxyPaths.forEach((path) => {
