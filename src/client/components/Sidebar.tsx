@@ -6,7 +6,6 @@ import { TraitsSelector } from './TraitsSelector.js';
 import { ImageStyleSelector } from './ImageStyleSelector.js';
 import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
-import { ModelSelector } from './ModelSelector.js';
 
 type SidebarProps = {
   isOpen: boolean;
