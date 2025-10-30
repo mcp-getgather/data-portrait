@@ -29,9 +29,7 @@ const BRANDS: Array<BrandConfig> = [
   goodreadsConfig,
 ];
 
-// NOTE: temporarily excluded wayfair brand due to this issue:
-// https://github.com/mcp-getgather/private-issues/issues/76
-const EXCLUDED_BRANDS: Array<string> = [wayfairConfig.brand_id];
+const EXCLUDED_BRANDS: Array<string> = [];
 
 // Sample data for demo purposes
 const sampleOrders: PurchaseHistory[] = [
