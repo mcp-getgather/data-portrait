@@ -10,6 +10,7 @@ import { geolocationService } from './services/geolocation-service.js';
 // Currently just define the MCP url path for each brand here for simplicity
 const MCP_URL_PATHS: Record<string, string> = {
   goodreads: 'mcp-books',
+  amazon: 'mcp-shopping',
 };
 class MCPClient {
   private client: Client;
