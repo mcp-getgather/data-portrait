@@ -2,6 +2,8 @@
   "brand_id": "wayfair",
   "brand_name": "Wayfair",
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/0/0a/Wayfair_logo_with_tagline.png",
+  "is_mandatory": false,
+  "is_dpage": true,
   "dataTransform": {
     "dataPath": "data.orderProductPagesByCustomer.nodes",
     "fieldMappings": [
@@ -17,7 +19,7 @@
       },
       {
         "outputKey": "order_date",
-        "sourcePath": "order_date",
+        "sourcePath": "order_date_and_store",
         "defaultValue": "N/A",
         "transform": "date"
       },
@@ -29,14 +31,16 @@
         "defaultValue": "$0.00"
       },
       {
-        "outputKey": "product_name",
-        "sourcePath": "product_name",
-        "defaultValue": "Unknown Product"
+        "outputKey": "product_names",
+        "sourcePath": "product_names",
+        "defaultValue": "Unknown Product",
+        "convertToArray": true
       },
       {
-        "outputKey": "image_url",
-        "sourcePath": "image_url",
-        "defaultValue": ""
+        "outputKey": "image_urls",
+        "sourcePath": "image_urls",
+        "defaultValue": "",
+        "convertToArray": true
       }
     ]
   },

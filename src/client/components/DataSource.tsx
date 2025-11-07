@@ -88,9 +88,8 @@ const getPurchaseHistory = async (brandConfig: BrandConfig) => {
       image_urls: item.image_urls as string[],
     }));
 
-    // Get detailed data for wayfair and office depot brands
+    // Get detailed data for office depot brand only
     if (
-      brandConfig.brand_name.toLowerCase() === 'wayfair' &&
       brandConfig.brand_name.toLowerCase() === 'office depot' &&
       purchaseHistory.length > 0
     ) {

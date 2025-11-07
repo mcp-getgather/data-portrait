@@ -69,6 +69,16 @@ function getNestedValue(obj: any, path: string): any {
   }, obj);
 }
 
+export function parseOrderDate(orderDateStr: string) {
+  // Match pattern like "Ordered On: June 4, 2025Wayfair Order #4325262636"
+  const orderMatch = orderDateStr.match(/Ordered On:\s*(\w+ \d+, \d+)/i);
+  if (orderMatch) {
+    return new Date(orderMatch[1]);
+  }
+
+  return null;
+}
+
 function parseReturnDate(returnDateStr: string) {
   const match = returnDateStr.match(/closed on (\w+ \d+, \d+)/);
   if (match) {
@@ -126,10 +136,34 @@ function applyTransform(
         if (Array.isArray(value)) {
           return value.map((v) => {
             if (typeof v === 'string') {
-              return parseReturnDate(v);
+              const orderDateParsed = parseOrderDate(v);
+              if (orderDateParsed) {
+                return orderDateParsed;
+              }
+
+              const returnDateParsed = parseReturnDate(v);
+              if (returnDateParsed) {
+                return returnDateParsed;
+              }
+
+              return new Date(v);
             }
             return v;
           });
+        }
+
+        if (typeof value === 'string') {
+          const orderDateParsed = parseOrderDate(value);
+          if (orderDateParsed) {
+            return orderDateParsed;
+          }
+
+          const returnDateParsed = parseReturnDate(value);
+          if (returnDateParsed) {
+            return returnDateParsed;
+          }
+
+          return new Date(value);
         }
 
         if (typeof value === 'object' && value.displayDate) {
@@ -169,7 +203,7 @@ export function transformData(
     // Handle both pre-processed arrays and raw objects that need path extraction.
     // Some data sources (like MCP calls) return pre-processed arrays,
     // while others (like Wayfair GraphQL) require extracting data using schema.dataPath
-    var dataArray: Array<any>;
+    let dataArray: Array<any>;
     if (Array.isArray(rawData)) {
       dataArray = rawData;
     } else {

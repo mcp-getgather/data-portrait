@@ -19,7 +19,7 @@ router.get('/dpage-signin-check/:brandId/:linkId', handleDpageSigninCheck);
 // Get purchase history
 router.get('/purchase-history/:brandId', handlePurchaseHistory);
 
-// Get purchase history details (wayfair and officedepot)
+// Get purchase history details (officedepot only)
 router.get(
   '/purchase-history-details/:brandId/:orderId',
   handlePurchaseHistoryDetails
