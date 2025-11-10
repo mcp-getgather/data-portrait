@@ -4,6 +4,7 @@ import { mcpClientManager } from '../mcp-client.js';
 import { settings } from '../config.js';
 import { geolocationService } from '../services/geolocation-service.js';
 import { analytics } from '../services/analytics-service.js';
+import { finalizeSignin } from '../services/mcp-service.js';
 
 const tools: Record<string, string[]> = {
   amazon: ['amazon_dpage_get_purchase_history'],
@@ -276,6 +277,15 @@ export const handleDpageSigninCheck = async (req: Request, res: Response) => {
       data_count: content.length,
       purchase_history: content,
       client_ip: clientIp,
+    });
+  }
+
+  if (isAuthCompleted) {
+    finalizeSignin({
+      sessionId: req.sessionID,
+      clientIp,
+      brandId,
+      signinId: linkId,
     });
   }
 
