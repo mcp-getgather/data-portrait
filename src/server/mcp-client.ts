@@ -11,6 +11,7 @@ import { geolocationService } from './services/geolocation-service.js';
 const MCP_URL_PATHS: Record<string, string> = {
   goodreads: 'mcp-books',
   amazon: 'mcp-shopping',
+  wayfair: 'mcp-shopping',
 };
 class MCPClient {
   private client: Client;
