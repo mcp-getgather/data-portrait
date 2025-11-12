@@ -29,7 +29,10 @@ const BRANDS: Array<BrandConfig> = [
   goodreadsConfig,
 ];
 
-const EXCLUDED_BRANDS: Array<string> = [];
+const EXCLUDED_BRANDS: Array<string> = [
+  // NOTE: exclude officedepot for now until successfully migrated to dpage
+  officedepotConfig.brand_id,
+];
 
 // Sample data for demo purposes
 const sampleOrders: PurchaseHistory[] = [
